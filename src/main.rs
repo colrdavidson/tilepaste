@@ -2,8 +2,12 @@
 extern crate glium;
 extern crate image;
 
+pub mod map;
+
 use glium::{DisplayBuild, Surface};
 use std::io::Cursor;
+
+use map::Map;
 
 #[derive(Copy, Clone)]
 struct Vert {
@@ -48,16 +52,10 @@ fn main() {
 	let image = glium::texture::RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
 	let texture = glium::texture::Texture2d::new(&display, image).unwrap();
 
-	let hat = atlas_verts(0);
+	let map = Map::new(10, 10);
+
 	let grass = atlas_verts(1);
-	let apple = atlas_verts(2);
-	let bee = atlas_verts(3);
-
-	let hat_buffer = glium::VertexBuffer::new(&display, &hat).unwrap();
 	let grass_buffer = glium::VertexBuffer::new(&display, &grass).unwrap();
-	let apple_buffer = glium::VertexBuffer::new(&display, &apple).unwrap();
-	let bee_buffer = glium::VertexBuffer::new(&display, &bee).unwrap();
-
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
 	let vert_shader_src = r#"
@@ -70,7 +68,7 @@ fn main() {
 		uniform mat4 matrix;
 		void main() {
 			v_tex_coords = tex_coords;
-			gl_Position = matrix * vec4(position, 0.0, 1.0);
+			gl_Position = matrix * vec4(position * 0.225, 0.0, 1.0);
 		}
 	"#;
 
@@ -90,53 +88,20 @@ fn main() {
 	let program = glium::Program::from_source(&display, vert_shader_src, frag_shader_src, None).unwrap();
 
 	loop {
-		let hat_uniforms = uniform! {
-			matrix: [
-				[1.0, 0.0, 0.0, 0.0],
-				[0.0, 1.0, 0.0, 0.0],
-				[0.0, 0.0, 1.0, 0.0],
-				[-0.5, -0.5, 0.0, 1.0f32],
-			],
-			tex: texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
-		};
-
-		let grass_uniforms = uniform! {
-			matrix: [
-				[1.0, 0.0, 0.0, 0.0],
-				[0.0, 1.0, 0.0, 0.0],
-				[0.0, 0.0, 1.0, 0.0],
-				[0.5, -0.5, 0.0, 1.0f32],
-			],
-			tex: texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
-		};
-
-		let apple_uniforms = uniform! {
-			matrix: [
-				[1.0, 0.0, 0.0, 0.0],
-				[0.0, 1.0, 0.0, 0.0],
-				[0.0, 0.0, 1.0, 0.0],
-				[-0.5, 0.5, 0.0, 1.0f32],
-			],
-			tex: texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
-		};
-
-		let bee_uniforms = uniform! {
-			matrix: [
-				[1.0, 0.0, 0.0, 0.0],
-				[0.0, 1.0, 0.0, 0.0],
-				[0.0, 0.0, 1.0, 0.0],
-				[0.5, 0.5, 0.0, 1.0f32],
-			],
-			tex: texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
-		};
-
 		let mut target = display.draw();
 		target.clear_color(0.0, 0.0, 1.0, 1.0);
 
-		target.draw(&hat_buffer, &indices, &program, &hat_uniforms, &Default::default()).unwrap();
-		target.draw(&grass_buffer, &indices, &program, &grass_uniforms, &Default::default()).unwrap();
-		target.draw(&apple_buffer, &indices, &program, &apple_uniforms, &Default::default()).unwrap();
-		target.draw(&bee_buffer, &indices, &program, &bee_uniforms, &Default::default()).unwrap();
+		for idx in 0..map.size() {
+			let x = idx % map.width;
+			let y = idx / map.width;
+			let matrix = map.uniform(x, y);
+			let grass_uniforms = uniform! {
+				matrix: matrix,
+				tex: texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
+			};
+
+			target.draw(&grass_buffer, &indices, &program, &grass_uniforms, &Default::default()).unwrap();
+		}
 
 		target.finish().unwrap();
 

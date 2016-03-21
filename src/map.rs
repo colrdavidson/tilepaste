@@ -84,22 +84,26 @@ pub struct View {
 	pub y: u32,
 	pub width: u32,
 	pub height: u32,
+	pub total_height: u32,
+	pub total_width: u32,
 }
 
 impl View {
-	pub fn new(start_x: u32, start_y: u32, width: u32, height: u32) -> View {
+	pub fn new(start_x: u32, start_y: u32, width: u32, height: u32, total_width: u32, total_height: u32) -> View {
 		View {
 			x: start_x,
 			y: start_y,
 			width: width,
 			height: height,
+			total_width: total_width,
+			total_height: total_height,
 		}
 	}
 
 	pub fn down(&mut self) {
 		let new_y = self.y - 1;
 
-		if new_y == 0 || new_y > self.height {
+		if new_y == 0 || new_y > (self.total_height - self.height) {
 			self.y = 0;
 		} else {
 			self.y = new_y;
@@ -109,8 +113,8 @@ impl View {
 	pub fn up(&mut self) {
 		let new_y = self.y + 1;
 
-		if new_y >= self.height {
-			self.y = self.height;
+		if new_y >= (self.total_height - self.height) {
+			self.y = self.total_height - self.height;
 		} else {
 			self.y = new_y;
 		}
@@ -119,7 +123,7 @@ impl View {
 	pub fn left(&mut self) {
 		let new_x = self.x - 1;
 
-		if new_x == 0 || new_x > self.width {
+		if new_x == 0 || new_x > (self.total_width - self.height) {
 			self.x = 0;
 		} else {
 			self.x = new_x;
@@ -129,8 +133,8 @@ impl View {
 	pub fn right(&mut self) {
 		let new_x = self.x + 1;
 
-		if new_x >= self.width {
-			self.x = self.width;
+		if new_x >= (self.total_width - self.width) {
+			self.x = self.total_width - self.width;
 		} else {
 			self.x = new_x;
 		}

@@ -66,7 +66,7 @@ fn main() {
 	let image = glium::texture::RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
 	let texture = glium::texture::SrgbTexture2d::new(&display, image).unwrap();
 
-	let map = Map::new(100, 100);
+	let map = Map::new(101, 101);
 
 	let one = atlas_verts(0);
 	let two = atlas_verts(1);
@@ -89,7 +89,7 @@ fn main() {
 		uniform mat4 matrix;
 		void main() {
 			v_tex_coords = tex_coords;
-			gl_Position = matrix * vec4(position * 0.225, 0.0, 1.0);
+			gl_Position = matrix * vec4(position * 0.125, 0.0, 1.0);
 		}
 	"#;
 
@@ -108,7 +108,7 @@ fn main() {
 
 	let program = glium::Program::from_source(&display, vert_shader_src, frag_shader_src, None).unwrap();
 
-	let mut view = View::new(0, 0, 10, 10);
+	let mut view = View::new(0, 0, 20, 20, 101, 101);
 
 	loop {
 		let mut target = display.draw();

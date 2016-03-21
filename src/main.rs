@@ -7,7 +7,7 @@ pub mod map;
 use glium::{DisplayBuild, Surface};
 use std::io::Cursor;
 
-use map::Map;
+use map::{Map, View};
 
 #[derive(Copy, Clone)]
 struct Vert {
@@ -41,6 +41,19 @@ fn atlas_verts(entry: usize) -> Vec<Vert> {
 	vec![vert1, vert2, vert3, vert4, vert5, vert6]
 }
 
+fn handle_input(key: Option<glium::glutin::VirtualKeyCode>, state: glium::glutin::ElementState, view: &mut View) {
+	if key.is_some() && state == glium::glutin::ElementState::Pressed {
+		let key = key.unwrap();
+		match key {
+			glium::glutin::VirtualKeyCode::W => { view.up(); },
+			glium::glutin::VirtualKeyCode::S => { view.down(); },
+			glium::glutin::VirtualKeyCode::A => { view.left(); },
+			glium::glutin::VirtualKeyCode::D => { view.right(); },
+			_ => (),
+		}
+	}
+}
+
 fn main() {
 	let display = glium::glutin::WindowBuilder::new()
 		.with_dimensions(640, 480)
@@ -53,10 +66,17 @@ fn main() {
 	let image = glium::texture::RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
 	let texture = glium::texture::SrgbTexture2d::new(&display, image).unwrap();
 
-	let map = Map::new(10, 10);
+	let map = Map::new(100, 100);
 
-	let grass = atlas_verts(2);
-	let grass_buffer = glium::VertexBuffer::immutable(&display, &grass).unwrap();
+	let one = atlas_verts(0);
+	let two = atlas_verts(1);
+	let three = atlas_verts(2);
+	let four = atlas_verts(3);
+	let one_buffer = glium::VertexBuffer::immutable(&display, &one).unwrap();
+	let two_buffer = glium::VertexBuffer::immutable(&display, &two).unwrap();
+	let three_buffer = glium::VertexBuffer::immutable(&display, &three).unwrap();
+	let four_buffer = glium::VertexBuffer::immutable(&display, &four).unwrap();
+
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
 	let vert_shader_src = r#"
@@ -88,20 +108,30 @@ fn main() {
 
 	let program = glium::Program::from_source(&display, vert_shader_src, frag_shader_src, None).unwrap();
 
+	let mut view = View::new(0, 0, 10, 10);
+
 	loop {
 		let mut target = display.draw();
 		target.clear_color(0.0, 0.0, 1.0, 1.0);
 
-		for idx in 0..map.size() {
-			let x = idx % map.width;
-			let y = idx / map.width;
-			let matrix = map.uniform(x, y);
-			let grass_uniforms = uniform! {
-				matrix: matrix,
-				tex: texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
-			};
+		for x in 0..view.width {
+			for y in 0..view.height {
+				let tile = map.uniform(x, y, x + view.x, y + view.y, view.width as u32, view.height as u32);
+				let tile_uniforms = uniform! {
+					matrix: tile.0,
+					tex: texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
+				};
 
-			target.draw(&grass_buffer, &indices, &program, &grass_uniforms, &Default::default()).unwrap();
+				let buffer;
+				match tile.1 {
+					0 => { buffer = &one_buffer; },
+					1 => { buffer = &two_buffer; },
+					2 => { buffer = &three_buffer; },
+					3 => { buffer = &four_buffer; },
+					_ => { buffer = &one_buffer; },
+				}
+				target.draw(buffer, &indices, &program, &tile_uniforms, &Default::default()).unwrap();
+			}
 		}
 
 		target.finish().unwrap();
@@ -109,6 +139,7 @@ fn main() {
 		for event in display.poll_events() {
 			match event {
 				glium::glutin::Event::Closed => return,
+				glium::glutin::Event::KeyboardInput(state, _, key) => handle_input(key, state, &mut view),
 				_ => (),
 			}
 		}

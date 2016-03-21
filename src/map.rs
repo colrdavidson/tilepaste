@@ -35,7 +35,7 @@ impl Map {
 			let id;
 			if (x % 5) == 0 || (y % 5) == 0 {
 				id = 3;
-			} else if (y % 2) == 0 {
+			} else if (y % 2) == 0 || (x % 2) == 0 {
 				id = 1;
 			} else {
 				id = 2;
@@ -62,8 +62,8 @@ impl Map {
 			tile = &err_tile;
 		}
 
-		let scaled_x = rerange(x as f32, 0.0, ((view_width as f32) - 1.0), -0.8, 0.8);
-		let scaled_y = rerange(y as f32, 0.0, ((view_height as f32) - 1.0), -0.8, 0.8);
+		let scaled_x = rerange(x as f32, 0.0, ((view_width as f32) - 1.0), -0.90, 0.90);
+		let scaled_y = rerange(y as f32, 0.0, ((view_height as f32) - 1.0), -0.90, 0.90);
 
 		let matrix = [
 			[1.0, 0.0, 0.0, 0.0],

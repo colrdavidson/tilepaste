@@ -18,12 +18,12 @@ struct Vert {
 implement_vertex!(Vert, position, tex_coords);
 
 fn atlas_verts(entry: usize) -> Vec<Vert> {
-	let num_entries = 4;
+	let num_entries = 16;
 
-	let scalar = 1.0 / ((num_entries as f32) / 2.0);
+	let scalar = 1.0 / ((num_entries as f32) / 4.0);
 
-	let base_x = entry % (num_entries / 2);
-	let base_y = entry / (num_entries / 2);
+	let base_x = entry % (num_entries / 4);
+	let base_y = entry / (num_entries / 4);
 	let base_x = (base_x as f32) * scalar;
 	let base_y = (base_y as f32) * scalar;
 
@@ -68,14 +68,21 @@ fn main() {
 
 	let map = Map::new(101, 101);
 
-	let one = atlas_verts(0);
-	let two = atlas_verts(1);
-	let three = atlas_verts(2);
-	let four = atlas_verts(3);
-	let one_buffer = glium::VertexBuffer::immutable(&display, &one).unwrap();
-	let two_buffer = glium::VertexBuffer::immutable(&display, &two).unwrap();
-	let three_buffer = glium::VertexBuffer::immutable(&display, &three).unwrap();
-	let four_buffer = glium::VertexBuffer::immutable(&display, &four).unwrap();
+	let bee = atlas_verts(13);
+	let apple = atlas_verts(12);
+	let hat = atlas_verts(8);
+	let grass = atlas_verts(9);
+	let stone = atlas_verts(10);
+	let obox = atlas_verts(15);
+	let tree = atlas_verts(14);
+
+	let bee_buffer = glium::VertexBuffer::immutable(&display, &bee).unwrap();
+	let apple_buffer = glium::VertexBuffer::immutable(&display, &apple).unwrap();
+	let hat_buffer = glium::VertexBuffer::immutable(&display, &hat).unwrap();
+	let grass_buffer = glium::VertexBuffer::immutable(&display, &grass).unwrap();
+	let box_buffer = glium::VertexBuffer::immutable(&display, &obox).unwrap();
+	let stone_buffer = glium::VertexBuffer::immutable(&display, &stone).unwrap();
+	let tree_buffer = glium::VertexBuffer::immutable(&display, &tree).unwrap();
 
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
@@ -89,7 +96,7 @@ fn main() {
 		uniform mat4 matrix;
 		void main() {
 			v_tex_coords = tex_coords;
-			gl_Position = matrix * vec4(position * 0.125, 0.0, 1.0);
+			gl_Position = matrix * vec4(position * 0.1, 0.0, 1.0);
 		}
 	"#;
 
@@ -124,11 +131,11 @@ fn main() {
 
 				let buffer;
 				match tile.1 {
-					0 => { buffer = &one_buffer; },
-					1 => { buffer = &two_buffer; },
-					2 => { buffer = &three_buffer; },
-					3 => { buffer = &four_buffer; },
-					_ => { buffer = &one_buffer; },
+					0 => { buffer = &box_buffer; },
+					1 => { buffer = &grass_buffer; },
+					2 => { buffer = &tree_buffer; },
+					3 => { buffer = &stone_buffer; },
+					_ => { buffer = &box_buffer; },
 				}
 				target.draw(buffer, &indices, &program, &tile_uniforms, &Default::default()).unwrap();
 			}

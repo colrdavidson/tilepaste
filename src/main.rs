@@ -108,7 +108,7 @@ fn main() {
 
 	let program = glium::Program::from_source(&display, vert_shader_src, frag_shader_src, None).unwrap();
 
-	let mut view = View::new(0, 0, 20, 20, 101, 101);
+	let mut view = View::new(0, 0, 20, 20, map.width as u32, map.height as u32);
 
 	loop {
 		let mut target = display.draw();

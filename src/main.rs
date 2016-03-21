@@ -45,17 +45,18 @@ fn main() {
 	let display = glium::glutin::WindowBuilder::new()
 		.with_dimensions(640, 480)
 		.with_title(format!("TilePaste"))
+		.with_vsync()
 		.build_glium().unwrap();
 
 	let image = image::load(Cursor::new(&include_bytes!("../assets/atlas.png")[..]), image::PNG).unwrap().to_rgba();
 	let image_dimensions = image.dimensions();
 	let image = glium::texture::RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
-	let texture = glium::texture::Texture2d::new(&display, image).unwrap();
+	let texture = glium::texture::SrgbTexture2d::new(&display, image).unwrap();
 
 	let map = Map::new(10, 10);
 
-	let grass = atlas_verts(1);
-	let grass_buffer = glium::VertexBuffer::new(&display, &grass).unwrap();
+	let grass = atlas_verts(2);
+	let grass_buffer = glium::VertexBuffer::immutable(&display, &grass).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
 	let vert_shader_src = r#"

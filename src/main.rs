@@ -3,11 +3,14 @@ extern crate glium;
 extern crate image;
 
 pub mod map;
+pub mod player;
 
 use glium::{DisplayBuild, Surface};
 use std::io::Cursor;
 
 use map::{Map, View};
+use map::rerange;
+use player::Player;
 
 #[derive(Copy, Clone)]
 struct Vert {
@@ -41,14 +44,14 @@ fn atlas_verts(entry: usize) -> Vec<Vert> {
 	vec![vert1, vert2, vert3, vert4, vert5, vert6]
 }
 
-fn handle_input(key: Option<glium::glutin::VirtualKeyCode>, state: glium::glutin::ElementState, view: &mut View) {
+fn handle_input(key: Option<glium::glutin::VirtualKeyCode>, state: glium::glutin::ElementState, mut view: &mut View, player: &mut Player) {
 	if key.is_some() && state == glium::glutin::ElementState::Pressed {
 		let key = key.unwrap();
 		match key {
-			glium::glutin::VirtualKeyCode::W => { view.up(); },
-			glium::glutin::VirtualKeyCode::S => { view.down(); },
-			glium::glutin::VirtualKeyCode::A => { view.left(); },
-			glium::glutin::VirtualKeyCode::D => { view.right(); },
+			glium::glutin::VirtualKeyCode::W => { player.up(&mut view); },
+			glium::glutin::VirtualKeyCode::S => { player.down(&mut view); },
+			glium::glutin::VirtualKeyCode::A => { player.left(&mut view); },
+			glium::glutin::VirtualKeyCode::D => { player.right(&mut view); },
 			_ => (),
 		}
 	}
@@ -116,6 +119,7 @@ fn main() {
 	let program = glium::Program::from_source(&display, vert_shader_src, frag_shader_src, None).unwrap();
 
 	let mut view = View::new(0, 0, 20, 20, map.width as u32, map.height as u32);
+	let mut player = Player::new(map.width as u32, map.height as u32, 0, 0, 13);
 
 	loop {
 		let mut target = display.draw();
@@ -141,12 +145,26 @@ fn main() {
 			}
 		}
 
+		let p_x = rerange(player.tile.x as f32, 0.0, ((view.width as f32) - 1.0), -0.90, 0.90);
+		let p_y = rerange(player.tile.y as f32, 0.0, ((view.height as f32) - 1.0), -0.90, 0.90);
+
+		let player_uniform = uniform! {
+			matrix: [
+				[1.0, 0.0, 0.0, 0.0],
+				[0.0, 1.0, 0.0, 0.0],
+				[0.0, 0.0, 1.0, 0.0],
+				[p_x, p_y, 0.0, 1.0f32],
+			],
+			tex: texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
+		};
+		target.draw(&bee_buffer, &indices, &program, &player_uniform, &Default::default()).unwrap();
+
 		target.finish().unwrap();
 
 		for event in display.poll_events() {
 			match event {
 				glium::glutin::Event::Closed => return,
-				glium::glutin::Event::KeyboardInput(state, _, key) => handle_input(key, state, &mut view),
+				glium::glutin::Event::KeyboardInput(state, _, key) => handle_input(key, state, &mut view, &mut player),
 				_ => (),
 			}
 		}

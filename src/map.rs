@@ -1,8 +1,8 @@
 #[derive(Debug)]
 pub struct Tile {
 	tex_id: u32,
-	x: u32,
-	y: u32,
+	pub x: u32,
+	pub y: u32,
 }
 
 impl Tile {
@@ -15,7 +15,7 @@ impl Tile {
 	}
 }
 
-fn rerange(c: f32, a: f32, b: f32, y: f32, z: f32) -> f32 {
+pub fn rerange(c: f32, a: f32, b: f32, y: f32, z: f32) -> f32 {
 	(((c - a) * (z - y)) / (b - a)) + y
 }
 

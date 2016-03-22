@@ -1,6 +1,6 @@
 #[derive(Debug)]
 pub struct Tile {
-	tex_id: u32,
+	pub tex_id: u32,
 	pub x: u32,
 	pub y: u32,
 }
@@ -20,7 +20,7 @@ pub fn rerange(c: f32, a: f32, b: f32, y: f32, z: f32) -> f32 {
 }
 
 pub struct Map {
-	map: Vec<Tile>,
+	pub map: Vec<Tile>,
 	pub height: usize,
 	pub width: usize,
 }
@@ -72,6 +72,17 @@ impl Map {
 			[scaled_x, scaled_y, 0.0, 1.0f32],
 		];
 		(matrix, tile.tex_id)
+	}
+
+	pub fn get(&self, x: u32, y: u32) -> Option<&Tile> {
+		let idx = (y * (self.width as u32)) + x;
+		let tile = self.map.get(idx as usize);
+		return tile;
+	}
+
+	pub fn set(&mut self, x: u32, y: u32, id: u32) {
+		let idx = (y * (self.width as u32)) + x;
+		self.map.get_mut(idx as usize).unwrap().tex_id = id;
 	}
 
 	pub fn size(&self) -> usize {

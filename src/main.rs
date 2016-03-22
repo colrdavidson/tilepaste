@@ -69,7 +69,7 @@ fn main() {
 	let image = glium::texture::RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
 	let texture = glium::texture::SrgbTexture2d::new(&display, image).unwrap();
 
-	let map = Map::new(101, 101);
+	let mut map = Map::new(101, 101);
 
 	let bee = atlas_verts(13);
 	let apple = atlas_verts(12);
@@ -125,6 +125,10 @@ fn main() {
 		let mut target = display.draw();
 		target.clear_color(0.0, 0.0, 1.0, 1.0);
 
+		if map.get(player.x, player.y).unwrap().tex_id == 2 {
+			map.set(player.x, player.y, 4);
+		}
+
 		for x in 0..view.width {
 			for y in 0..view.height {
 				let tile = map.uniform(x, y, x + view.x, y + view.y, view.width as u32, view.height as u32);
@@ -139,6 +143,7 @@ fn main() {
 					1 => { buffer = &grass_buffer; },
 					2 => { buffer = &tree_buffer; },
 					3 => { buffer = &stone_buffer; },
+					4 => { buffer = &apple_buffer; },
 					_ => { buffer = &box_buffer; },
 				}
 				target.draw(buffer, &indices, &program, &tile_uniforms, &Default::default()).unwrap();

@@ -63,7 +63,7 @@ impl Map {
 		}
 
 		let scaled_x = rerange(x as f32, 0.0, ((view_width as f32) - 1.0), -0.90, 0.90);
-		let scaled_y = rerange(y as f32, 0.0, ((view_height as f32) - 1.0), -0.90, 0.90);
+		let scaled_y = rerange(y as f32, 0.0, ((view_height as f32) - 1.0), -0.90 + 0.0625, 0.90);
 
 		let matrix = [
 			[1.0, 0.0, 0.0, 0.0],
@@ -112,12 +112,10 @@ impl View {
 	}
 
 	pub fn down(&mut self) {
-		let new_y = self.y - 1;
-
-		if new_y == 0 || new_y > (self.total_height - self.height) {
+		if self.y == 0 || (self.y - 1) > (self.total_height - self.height) {
 			self.y = 0;
 		} else {
-			self.y = new_y;
+			self.y -= 1;
 		}
 	}
 
@@ -132,12 +130,10 @@ impl View {
 	}
 
 	pub fn left(&mut self) {
-		let new_x = self.x - 1;
-
-		if new_x == 0 || new_x > (self.total_width - self.height) {
+		if self.x == 0 || (self.x - 1) > (self.total_width - self.height) {
 			self.x = 0;
 		} else {
-			self.x = new_x;
+			self.x -= 1;
 		}
 	}
 

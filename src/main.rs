@@ -4,6 +4,7 @@ extern crate image;
 
 pub mod map;
 pub mod player;
+pub mod ui;
 
 use glium::{DisplayBuild, Surface};
 use std::io::Cursor;
@@ -20,13 +21,15 @@ struct Vert {
 
 implement_vertex!(Vert, position, tex_coords);
 
-fn atlas_verts(entry: usize) -> Vec<Vert> {
-	let num_entries = 16;
+fn atlas_verts(entry: usize, sheet_entries: usize) -> Vec<Vert> {
+	let num_entries = sheet_entries;
+	let col_num = (num_entries as f32).sqrt();
+	let row_num = (num_entries as f32).sqrt();
 
-	let scalar = 1.0 / ((num_entries as f32) / 4.0);
+	let scalar = 1.0 / ((num_entries as f32) / col_num);
 
-	let base_x = entry % (num_entries / 4);
-	let base_y = entry / (num_entries / 4);
+	let base_x = entry % (num_entries / (col_num as usize));
+	let base_y = entry / (num_entries / (row_num as usize));
 	let base_x = (base_x as f32) * scalar;
 	let base_y = (base_y as f32) * scalar;
 
@@ -42,6 +45,42 @@ fn atlas_verts(entry: usize) -> Vec<Vert> {
 	let vert5 = Vert { position: [-0.5,  0.5], tex_coords: top_left };
 	let vert6 = Vert { position: [ 0.5,  0.5], tex_coords: top_right };
 	vec![vert1, vert2, vert3, vert4, vert5, vert6]
+}
+
+fn font_verts(entry: char) -> Vec<Vert> {
+	let entry = entry as usize;
+	let width = 8;
+	let height = 16;
+	let num_entries = width * height;
+
+	let scalar_y = 1.0 / ((num_entries as f32) / (width as f32));
+	let scalar_x = 1.0 / ((num_entries as f32) / (height as f32));
+
+	let base_x = entry % (num_entries / height);
+	let base_y = entry / (num_entries / height);
+	let base_x = (base_x as f32) * scalar_x;
+	let base_y = (base_y as f32) * scalar_y;
+
+	let bottom_left =  [base_x, base_y];
+	let bottom_right = [base_x + scalar_x, base_y];
+	let top_left = 	   [base_x, base_y + scalar_y];
+	let top_right =	   [base_x + scalar_x, base_y + scalar_y];
+
+	let vert1 = Vert { position: [-0.5,  0.5], tex_coords: bottom_left };
+	let vert2 = Vert { position: [-0.5, -0.5], tex_coords: top_left };
+	let vert3 = Vert { position: [ 0.5,  0.5], tex_coords: bottom_right };
+	let vert4 = Vert { position: [ 0.5,  0.5], tex_coords: bottom_right };
+	let vert5 = Vert { position: [-0.5, -0.5], tex_coords: top_left };
+	let vert6 = Vert { position: [ 0.5, -0.5], tex_coords: top_right };
+	vec![vert1, vert2, vert3, vert4, vert5, vert6]
+}
+
+fn text_to_font(string: &str) -> Vec<Vec<Vert>> {
+	let mut text = Vec::new();
+	for c in string.chars() {
+		text.push(font_verts(c));
+	}
+	text
 }
 
 fn handle_input(key: Option<glium::glutin::VirtualKeyCode>, state: glium::glutin::ElementState, mut view: &mut View, player: &mut Player) {
@@ -64,20 +103,26 @@ fn main() {
 		.with_vsync()
 		.build_glium().unwrap();
 
-	let image = image::load(Cursor::new(&include_bytes!("../assets/atlas.png")[..]), image::PNG).unwrap().to_rgba();
-	let image_dimensions = image.dimensions();
-	let image = glium::texture::RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
-	let texture = glium::texture::SrgbTexture2d::new(&display, image).unwrap();
+	let atlas = image::load(Cursor::new(&include_bytes!("../assets/atlas.png")[..]), image::PNG).unwrap().to_rgba();
+	let font = image::load(Cursor::new(&include_bytes!("../assets/termfont.png")[..]), image::PNG).unwrap().to_rgba();
+	let atlas_dimensions = atlas.dimensions();
+	let font_dimensions = font.dimensions();
+	let atlas = glium::texture::RawImage2d::from_raw_rgba_reversed(atlas.into_raw(), atlas_dimensions);
+	let font = glium::texture::RawImage2d::from_raw_rgba(font.into_raw(), font_dimensions);
+	let atlas_tex = glium::texture::SrgbTexture2d::new(&display, atlas).unwrap();
+	let font_tex = glium::texture::SrgbTexture2d::new(&display, font).unwrap();
 
 	let mut map = Map::new(101, 101);
 
-	let bee = atlas_verts(13);
-	let apple = atlas_verts(12);
-	let hat = atlas_verts(8);
-	let grass = atlas_verts(9);
-	let stone = atlas_verts(10);
-	let obox = atlas_verts(15);
-	let tree = atlas_verts(14);
+	let bee = atlas_verts(13, 16);
+	let apple = atlas_verts(12, 16);
+	let hat = atlas_verts(8, 16);
+	let grass = atlas_verts(9, 16);
+	let stone = atlas_verts(10, 16);
+	let obox = atlas_verts(15, 16);
+	let tree = atlas_verts(14, 16);
+	let score = text_to_font("TilePaste");
+
 
 	let bee_buffer = glium::VertexBuffer::immutable(&display, &bee).unwrap();
 	let apple_buffer = glium::VertexBuffer::immutable(&display, &apple).unwrap();
@@ -86,6 +131,11 @@ fn main() {
 	let box_buffer = glium::VertexBuffer::immutable(&display, &obox).unwrap();
 	let stone_buffer = glium::VertexBuffer::immutable(&display, &stone).unwrap();
 	let tree_buffer = glium::VertexBuffer::immutable(&display, &tree).unwrap();
+
+	let mut score_buffers = Vec::new();
+	for c in score {
+		score_buffers.push(glium::VertexBuffer::immutable(&display, &c).unwrap());
+	}
 
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
@@ -134,7 +184,7 @@ fn main() {
 				let tile = map.uniform(x, y, x + view.x, y + view.y, view.width as u32, view.height as u32);
 				let tile_uniforms = uniform! {
 					matrix: tile.0,
-					tex: texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
+					tex: atlas_tex.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
 				};
 
 				let buffer;
@@ -151,7 +201,7 @@ fn main() {
 		}
 
 		let p_x = rerange(player.tile.x as f32, 0.0, ((view.width as f32) - 1.0), -0.90, 0.90);
-		let p_y = rerange(player.tile.y as f32, 0.0, ((view.height as f32) - 1.0), -0.90, 0.90);
+		let p_y = rerange(player.tile.y as f32, 0.0, ((view.height as f32) - 1.0), -0.90 + 0.0625, 0.90);
 
 		let player_uniform = uniform! {
 			matrix: [
@@ -160,9 +210,25 @@ fn main() {
 				[0.0, 0.0, 1.0, 0.0],
 				[p_x, p_y, 0.0, 1.0f32],
 			],
-			tex: texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
+			tex: atlas_tex.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
 		};
+
 		target.draw(&bee_buffer, &indices, &program, &player_uniform, &Default::default()).unwrap();
+		let mut letter_x = -1.0 + 0.0625;
+		let letter_y = -1.0 + 0.0625;
+		for c in score_buffers.iter() {
+			let score_uniform = uniform! {
+				matrix: [
+					[1.0, 0.0, 0.0, 0.0],
+					[0.0, 1.0, 0.0, 0.0],
+					[0.0, 0.0, 1.0, 0.0],
+					[letter_x, letter_y, 0.0, 1.0f32],
+				],
+				tex: font_tex.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
+			};
+			target.draw(c, &indices, &program, &score_uniform, &Default::default()).unwrap();
+			letter_x += 0.0625;
+		}
 
 		target.finish().unwrap();
 

@@ -20,13 +20,10 @@ impl Player {
 	}
 
 	pub fn down(&mut self, view: &mut View) {
-		let new_y = self.tile.y - 1;
-
-		if new_y == 0 || new_y > self.map_height {
-			self.tile.y = 0;
+		if self.tile.y == 0 || (self.tile.y - 1) > self.map_height {
 			view.down();
 		} else {
-			self.tile.y = new_y;
+			self.tile.y -= 1;
 		}
 
 		if self.y > 0 {
@@ -50,13 +47,10 @@ impl Player {
 	}
 
 	pub fn left(&mut self, view: &mut View) {
-		let new_x = self.tile.x - 1;
-
-		if new_x == 0 || new_x > self.map_width {
-			self.tile.x = 0;
+		if self.tile.x == 0 || (self.tile.x - 1) > self.map_width {
 			view.left();
 		} else {
-			self.tile.x = new_x;
+			self.tile.x -= 1;
 		}
 
 		if self.x > 0 {
@@ -73,7 +67,7 @@ impl Player {
 		} else {
 			self.tile.x = new_x;
 		}
-		
+
 		if self.x < view.total_width {
 			self.x += 1;
 		}

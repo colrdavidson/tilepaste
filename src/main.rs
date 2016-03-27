@@ -48,7 +48,7 @@ fn atlas_verts(entry: usize, sheet_entries: usize) -> Vec<Vert> {
 
 fn font_verts(entry: char) -> Vec<Vert> {
 	let entry = entry as usize;
-	let width = 8;
+	let width = 16;
 	let height = 16;
 	let num_entries = width * height;
 
@@ -82,17 +82,19 @@ fn text_to_font(string: &str) -> Vec<Vec<Vert>> {
 	text
 }
 
-fn handle_input(key: Option<glium::glutin::VirtualKeyCode>, state: glium::glutin::ElementState, mut view: &mut View, player: &mut Player) {
+fn handle_input(key: Option<glium::glutin::VirtualKeyCode>, state: glium::glutin::ElementState, mut view: &mut View, player: &mut Player) -> bool {
 	if key.is_some() && state == glium::glutin::ElementState::Pressed {
 		let key = key.unwrap();
 		match key {
-			glium::glutin::VirtualKeyCode::W => { player.up(&mut view); },
-			glium::glutin::VirtualKeyCode::S => { player.down(&mut view); },
-			glium::glutin::VirtualKeyCode::A => { player.left(&mut view); },
-			glium::glutin::VirtualKeyCode::D => { player.right(&mut view); },
-			_ => (),
+			glium::glutin::VirtualKeyCode::W => { player.up(&mut view); return false; },
+			glium::glutin::VirtualKeyCode::S => { player.down(&mut view); return false; },
+			glium::glutin::VirtualKeyCode::A => { player.left(&mut view); return false; },
+			glium::glutin::VirtualKeyCode::D => { player.right(&mut view); return false; },
+			glium::glutin::VirtualKeyCode::Q => { return true; }
+			_ => { return false; },
 		}
 	}
+	false
 }
 
 fn main() {
@@ -234,7 +236,7 @@ fn main() {
 		for event in display.poll_events() {
 			match event {
 				glium::glutin::Event::Closed => return,
-				glium::glutin::Event::KeyboardInput(state, _, key) => handle_input(key, state, &mut view, &mut player),
+				glium::glutin::Event::KeyboardInput(state, _, key) => if handle_input(key, state, &mut view, &mut player) { return; },
 				_ => (),
 			}
 		}

@@ -4,7 +4,6 @@ extern crate image;
 
 pub mod map;
 pub mod player;
-pub mod ui;
 
 use glium::{DisplayBuild, Surface};
 use std::io::Cursor;

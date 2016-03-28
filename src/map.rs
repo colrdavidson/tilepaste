@@ -1,149 +1,104 @@
-#[derive(Debug)]
-pub struct Tile {
-	pub tex_id: u32,
-	pub x: u32,
-	pub y: u32,
-}
+use glium;
 
-impl Tile {
-	pub fn new(id: u32, x: u32, y: u32) -> Tile {
-		Tile {
-			tex_id: id,
-			x: x,
-			y: y,
-		}
-	}
-}
-
-pub fn rerange(c: f32, a: f32, b: f32, y: f32, z: f32) -> f32 {
-	(((c - a) * (z - y)) / (b - a)) + y
-}
-
-pub struct Map {
-	pub map: Vec<Tile>,
-	pub height: usize,
-	pub width: usize,
-}
-
-impl Map {
-	pub fn new(width: usize, height: usize) -> Map {
-		let mut map = Vec::with_capacity((width) * (height));
-
-		for index in 0..map.capacity() {
-			let x = index % width;
-			let y = index / width;
-			let id;
-			if (x % 5) == 0 || (y % 5) == 0 {
-				id = 3;
-			} else if (y % 2) == 0 || (x % 2) == 0 {
-				id = 1;
-			} else {
-				id = 2;
-			}
-			map.push(Tile::new(id, x as u32, y as u32));
-		}
-
-		Map {
-			map: map,
-			height: height,
-			width: width,
-		}
-	}
-
-	pub fn uniform(&self, x: u32, y: u32, view_x: u32, view_y: u32, view_width: u32, view_height: u32) -> ([[f32; 4]; 4], u32) {
-		let idx = (view_y * (self.width as u32)) + view_x;
-		let err_tile = Tile::new(view_x, view_y, 0);
-
-		let tile;
-		let tmp = self.map.get(idx as usize);
-		if tmp.is_some() {
-			tile = tmp.unwrap();
-		} else {
-			tile = &err_tile;
-		}
-
-		let scaled_x = rerange(x as f32, 0.0, ((view_width as f32) - 1.0), -0.90, 0.90);
-		let scaled_y = rerange(y as f32, 0.0, ((view_height as f32) - 1.0), -0.90 + 0.0625, 0.90);
-
-		let matrix = [
-			[1.0, 0.0, 0.0, 0.0],
-			[0.0, 1.0, 0.0, 0.0],
-			[0.0, 0.0, 1.0, 0.0],
-			[scaled_x, scaled_y, 0.0, 1.0f32],
-		];
-		(matrix, tile.tex_id)
-	}
-
-	pub fn get(&self, x: u32, y: u32) -> Option<&Tile> {
-		let idx = (y * (self.width as u32)) + x;
-		let tile = self.map.get(idx as usize);
-		return tile;
-	}
-
-	pub fn set(&mut self, x: u32, y: u32, id: u32) {
-		let idx = (y * (self.width as u32)) + x;
-		self.map.get_mut(idx as usize).unwrap().tex_id = id;
-	}
-
-	pub fn size(&self) -> usize {
-		self.width * self.height
-	}
-}
+use tile::{Tile, TileAtlas};
+use utils::{rerange, translate};
 
 pub struct View {
 	pub x: u32,
 	pub y: u32,
 	pub width: u32,
 	pub height: u32,
-	pub total_height: u32,
-	pub total_width: u32,
 }
 
 impl View {
-	pub fn new(start_x: u32, start_y: u32, width: u32, height: u32, total_width: u32, total_height: u32) -> View {
+	pub fn new(start_x: u32, start_y: u32, width: u32, height: u32) -> View {
 		View {
 			x: start_x,
 			y: start_y,
 			width: width,
 			height: height,
-			total_width: total_width,
-			total_height: total_height,
 		}
 	}
 
-	pub fn down(&mut self) {
-		if self.y == 0 || (self.y - 1) > (self.total_height - self.height) {
-			self.y = 0;
-		} else {
-			self.y -= 1;
+	pub fn down(&mut self) { println!("View down!"); }
+
+	pub fn up(&mut self) { println!("View down!"); }
+
+    pub fn left(&mut self) { println!("View left!"); }
+
+    pub fn right(&mut self) { println!("View right!"); }
+}
+
+pub struct Map<'a> {
+	pub map: Vec<Tile<'a>>,
+	pub view: View,
+	pub height: u32,
+	pub width: u32,
+}
+
+impl<'a> Map<'a> {
+	pub fn new(width: u32, height: u32, view_width: u32, view_height: u32, atlas: &'a TileAtlas, display: &glium::backend::glutin_backend::GlutinFacade) -> Map<'a> {
+		let mut map = Vec::with_capacity((width * height) as usize);
+
+		for index in 0..map.capacity() {
+			let x = (index as u32) % width;
+			let y = (index as u32) / width;
+			let id;
+			if (x % 5) == 0 || (y % 5) == 0 {
+				id = 10;
+			} else if (y % 2) == 0 || (x % 2) == 0 {
+				id = 9;
+			} else {
+				id = 14;
+			}
+			map.push(Tile::new(id, atlas, display));
+		}
+
+		let view = View::new(0, 0, view_width, view_height);
+
+		Map {
+			map: map,
+			view: view,
+			height: height,
+			width: width,
 		}
 	}
 
-	pub fn up(&mut self) {
-		let new_y = self.y + 1;
+	pub fn uniform(&self, x: u32, y: u32) -> [[f32; 4]; 4] {
+		let scaled_x = rerange(x as f32, 0.0, ((self.view.width as f32) - 1.0), -0.90, 0.90);
+		let scaled_y = rerange(y as f32, 0.0, ((self.view.height as f32) - 1.0), -0.90 + 0.0625, 0.90);
+		//println!("(x,y): {},{}", scaled_x, scaled_y);
 
-		if new_y >= (self.total_height - self.height) {
-			self.y = self.total_height - self.height;
-		} else {
-			self.y = new_y;
-		}
+		[
+			[1.0, 0.0, 0.0, 0.0],
+			[0.0, 1.0, 0.0, 0.0],
+			[0.0, 0.0, 1.0, 0.0],
+			[scaled_x, scaled_y, 0.0, 1.0f32],
+		]
 	}
 
-	pub fn left(&mut self) {
-		if self.x == 0 || (self.x - 1) > (self.total_width - self.height) {
-			self.x = 0;
-		} else {
-			self.x -= 1;
-		}
+	pub fn get(&self, x: u32, y: u32) -> Option<&Tile> {
+		let tile = self.map.get(translate(x, y, self.width));
+		return tile;
 	}
 
-	pub fn right(&mut self) {
-		let new_x = self.x + 1;
+	pub fn set(&mut self, x: u32, y: u32, id: u32) {
+		self.map.get_mut(translate(x, y, self.width)).unwrap().tex_id = id;
+	}
 
-		if new_x >= (self.total_width - self.width) {
-			self.x = self.total_width - self.width;
-		} else {
-			self.x = new_x;
+	pub fn size(&self) -> u32 {
+		self.width * self.height
+	}
+
+	pub fn draw(&mut self, mut target: &mut glium::Frame, program: &glium::Program) {
+		for x in 0..self.view.width {
+			for y in 0..self.view.height {
+				let tile = self.map.get(translate(x, y, self.view.width)).unwrap();
+				let matrix = self.uniform(x, y);
+//				println!("{:?} {:?}", tile, matrix);
+
+				tile.draw(target, &program, matrix);
+			}
 		}
 	}
 }

@@ -5,4 +5,5 @@ authors = ["Colin Davidson <colin@pentaquine.com>"]
 
 [dependencies]
 glium = "*"
+glium_text = "*"
 image = "*"

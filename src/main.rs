@@ -42,7 +42,7 @@ fn main() {
 		.build_glium().unwrap();
 
 	let ratio = width as f32 / height as f32;
-	let atlas = TileAtlas::new(&display, 8, 8);
+	let atlas = TileAtlas::new(&display, 16, 16);
 	let mut map = Map::new(10, 10, 10, 10, &atlas, &display);
 
 	let vert_shader_src = r#"
@@ -77,11 +77,11 @@ fn main() {
 	let mut player = Player::new(13, &atlas, 0, 0, &display);
 
 	let text_system = glium_text::TextSystem::new(&display);
-//	let font_file = std::fs::File::open(&std::path::Path::new("../assets/font.ttf")).unwrap();
-//	let font = glium_text::FontTexture::new(&display, font_file, 24).unwrap();
+	let font_file = std::fs::File::open(&std::path::Path::new("assets/font.ttf")).unwrap();
+	let font = glium_text::FontTexture::new(&display, font_file, 24).unwrap();
 	let mut score = 0;
 
-//	loop {
+	loop {
 		let mut target = display.draw();
 		target.clear_color(0.0, 0.0, 1.0, 1.0);
 
@@ -105,7 +105,7 @@ fn main() {
 			tex: atlas.texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
 		};
 
-/*		let score_text = glium_text::TextDisplay::new(&text_system, &font, format!("score: {}", score).as_str());
+		let score_text = glium_text::TextDisplay::new(&text_system, &font, format!("score: {}", score).as_str());
 		let title_text = glium_text::TextDisplay::new(&text_system, &font, "TilePaste");
 
 		let score_matrix = [
@@ -123,7 +123,7 @@ fn main() {
 		];
 
 		glium_text::draw(&score_text, &text_system, &mut target, score_matrix, (1.0, 1.0, 0.0, 1.0));
-		glium_text::draw(&title_text, &text_system, &mut target, title_matrix, (1.0, 1.0, 0.0, 1.0));*/
+		glium_text::draw(&title_text, &text_system, &mut target, title_matrix, (1.0, 1.0, 0.0, 1.0));
 
 		target.finish().unwrap();
 
@@ -134,8 +134,5 @@ fn main() {
 				_ => (),
 			}
 		}
-//	}
-	loop {
-
 	}
 }

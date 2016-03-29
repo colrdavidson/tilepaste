@@ -9,7 +9,6 @@ use vert::Vert;
 
 pub struct Tile<'a> {
 	pub tex_id: u32,
-    pub vert_buffer: glium::VertexBuffer<Vert>,
     pub atlas: &'a TileAtlas,
 }
 
@@ -21,17 +20,14 @@ impl<'a> fmt::Debug for Tile<'a> {
 
 impl<'a> Tile<'a> {
 	pub fn new(id: u32, atlas: &'a TileAtlas, display: &glium::backend::glutin_backend::GlutinFacade) -> Tile<'a> {
-        let vert_buffer = glium::VertexBuffer::empty_dynamic(display, 6).unwrap();
 		Tile {
 			tex_id: id,
-            vert_buffer: vert_buffer,
             atlas: atlas,
 		}
 	}
 
     pub fn draw(&self, mut target: &mut glium::Frame, program: &glium::Program, matrix: [[f32; 4]; 4]) {
-        let tile_verts = self.atlas.tex_verts.get(self.tex_id as usize).unwrap();
-        self.vert_buffer.write(&tile_verts);
+        let buffer = self.atlas.tex_verts.get(self.tex_id as usize).unwrap();
         let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
         let tile_uniform = uniform! {
@@ -39,13 +35,13 @@ impl<'a> Tile<'a> {
             tex: self.atlas.texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
         };
 
-        target.draw(&self.vert_buffer, &indices, program, &tile_uniform, &Default::default()).unwrap();
+        target.draw(buffer, &indices, program, &tile_uniform, &Default::default()).unwrap();
     }
 }
 
 pub struct TileAtlas {
-    pub texture: glium::texture::Texture2d,
-    pub tex_verts: Vec<Vec<Vert>>,
+    pub texture: glium::texture::SrgbTexture2d,
+    pub tex_verts: Vec<glium::VertexBuffer<Vert>>,
     pub img_width: u32,
     pub img_height: u32,
     pub tile_width: u32,
@@ -58,7 +54,7 @@ impl TileAtlas {
         let img = image::load(Cursor::new(&include_bytes!("../assets/atlas.png")[..]), image::PNG).unwrap().to_rgba();
         let dims = img.dimensions();
         let raw_img = glium::texture::RawImage2d::from_raw_rgba_reversed(img.into_raw(), dims);
-        let texture = glium::texture::Texture2d::new(display, raw_img).unwrap();
+        let texture = glium::texture::SrgbTexture2d::new(display, raw_img).unwrap();
 
         let img_width = dims.0;
         let img_height = dims.1;
@@ -70,7 +66,8 @@ impl TileAtlas {
         let mut tex_verts = Vec::with_capacity(num_entries);
 
         for i in 0..num_entries {
-            tex_verts.push(atlas_verts(i, num_entries));
+			let buffer = glium::VertexBuffer::immutable(display, atlas_verts(i, num_entries).as_slice()).unwrap();
+            tex_verts.push(buffer);
         }
 
         TileAtlas {

@@ -37,7 +37,7 @@ pub struct Map<'a> {
 }
 
 impl<'a> Map<'a> {
-	pub fn new(width: u32, height: u32, view_width: u32, view_height: u32, atlas: &'a TileAtlas, display: &glium::backend::glutin_backend::GlutinFacade) -> Map<'a> {
+	pub fn new(width: u32, height: u32, view_width: u32, view_height: u32, atlas: &'a TileAtlas) -> Map<'a> {
 		let mut map = Vec::with_capacity((width * height) as usize);
 
 		for index in 0..map.capacity() {
@@ -51,7 +51,7 @@ impl<'a> Map<'a> {
 			} else {
 				id = 14;
 			}
-			map.push(Tile::new(id, atlas, display));
+			map.push(Tile::new(id, atlas));
 		}
 
 		let view = View::new(0, 0, view_width, view_height);
@@ -64,13 +64,13 @@ impl<'a> Map<'a> {
 		}
 	}
 
-	pub fn uniform(&self, x: u32, y: u32) -> [[f32; 4]; 4] {
-		let scaled_x = rerange(x as f32, 0.0, ((self.view.width as f32) - 1.0), -0.90, 0.90);
+	pub fn uniform(&self, x: u32, y: u32, ratio: f32) -> [[f32; 4]; 4] {
+		let scaled_x = rerange((x as f32) / ratio, 0.0, ((self.view.width as f32) - 1.0), -0.90, 0.90);
 		let scaled_y = rerange(y as f32, 0.0, ((self.view.height as f32) - 1.0), -0.90 + 0.0625, 0.90);
 		//println!("(x,y): {},{}", scaled_x, scaled_y);
 
 		[
-			[1.0, 0.0, 0.0, 0.0],
+			[1.0 / ratio, 0.0, 0.0, 0.0],
 			[0.0, 1.0, 0.0, 0.0],
 			[0.0, 0.0, 1.0, 0.0],
 			[scaled_x, scaled_y, 0.0, 1.0f32],
@@ -90,12 +90,11 @@ impl<'a> Map<'a> {
 		self.width * self.height
 	}
 
-	pub fn draw(&mut self, mut target: &mut glium::Frame, program: &glium::Program) {
+	pub fn draw(&mut self, mut target: &mut glium::Frame, program: &glium::Program, ratio: f32) {
 		for x in 0..self.view.width {
 			for y in 0..self.view.height {
 				let tile = self.map.get(translate(x, y, self.view.width)).unwrap();
-				let matrix = self.uniform(x, y);
-//				println!("{:?} {:?}", tile, matrix);
+				let matrix = self.uniform(x, y, ratio);
 
 				tile.draw(target, &program, matrix);
 			}

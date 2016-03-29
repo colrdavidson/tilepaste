@@ -19,7 +19,7 @@ impl<'a> fmt::Debug for Tile<'a> {
 }
 
 impl<'a> Tile<'a> {
-	pub fn new(id: u32, atlas: &'a TileAtlas, display: &glium::backend::glutin_backend::GlutinFacade) -> Tile<'a> {
+	pub fn new(id: u32, atlas: &'a TileAtlas) -> Tile<'a> {
 		Tile {
 			tex_id: id,
             atlas: atlas,

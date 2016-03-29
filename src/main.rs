@@ -12,7 +12,6 @@ pub mod vert;
 use glium::{DisplayBuild, Surface};
 
 use map::Map;
-use utils::rerange;
 use player::Player;
 use tile::TileAtlas;
 
@@ -32,8 +31,8 @@ fn handle_input(key: Option<glium::glutin::VirtualKeyCode>, state: glium::glutin
 }
 
 fn main() {
-	let width = 640;
-	let height = 480;
+	let width = 800;
+	let height = 800;
 
 	let display = glium::glutin::WindowBuilder::new()
 		.with_dimensions(width, height)
@@ -43,7 +42,7 @@ fn main() {
 
 	let ratio = width as f32 / height as f32;
 	let atlas = TileAtlas::new(&display, 16, 16);
-	let mut map = Map::new(10, 10, 10, 10, &atlas, &display);
+	let mut map = Map::new(11, 11, 11, 11, &atlas);
 
 	let vert_shader_src = r#"
 		#version 140
@@ -55,7 +54,7 @@ fn main() {
 		uniform mat4 matrix;
 		void main() {
 			v_tex_coords = tex_coords;
-			gl_Position = matrix * vec4(position * 0.1, 0.0, 1.0);
+			gl_Position = matrix * vec4(position * 0.18, 0.0, 1.0);
 		}
 	"#;
 
@@ -74,7 +73,7 @@ fn main() {
 
 	let program = glium::Program::from_source(&display, vert_shader_src, frag_shader_src, None).unwrap();
 
-	let mut player = Player::new(13, &atlas, 0, 0, &display);
+	let mut player = Player::new(13, &atlas, 0, 0);
 
 	let text_system = glium_text::TextSystem::new(&display);
 	let font_file = std::fs::File::open(&std::path::Path::new("assets/font.ttf")).unwrap();
@@ -85,25 +84,13 @@ fn main() {
 		let mut target = display.draw();
 		target.clear_color(0.0, 0.0, 1.0, 1.0);
 
-		if map.get(player.x, player.y).unwrap().tex_id == 2 {
-			map.set(player.x, player.y, 4);
+		if map.get(player.x as u32, player.y as u32).unwrap().tex_id == 14 {
+			map.set(player.x as u32, player.y as u32, 12);
 			score += 1;
 		}
 
-		map.draw(&mut target, &program);
-
-		let p_x = rerange(player.x as f32, 0.0, ((map.view.width as f32) - 1.0), -0.90, 0.90);
-		let p_y = rerange(player.y as f32, 0.0, ((map.view.height as f32) - 1.0), -0.90 + 0.0625, 0.90);
-
-		let player_uniform = uniform! {
-			matrix: [
-				[1.0, 0.0, 0.0, 0.0],
-				[0.0, 1.0, 0.0, 0.0],
-				[0.0, 0.0, 1.0, 0.0],
-				[p_x, p_y, 0.0, 1.0f32],
-			],
-			tex: atlas.texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
-		};
+		map.draw(&mut target, &program, ratio);
+		player.draw(&mut target, &program, &map, ratio);
 
 		let score_text = glium_text::TextDisplay::new(&text_system, &font, format!("score: {}", score).as_str());
 		let title_text = glium_text::TextDisplay::new(&text_system, &font, "TilePaste");

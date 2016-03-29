@@ -64,19 +64,6 @@ impl<'a> Map<'a> {
 		}
 	}
 
-	pub fn uniform(&self, x: u32, y: u32, ratio: f32) -> [[f32; 4]; 4] {
-		let scaled_x = rerange((x as f32) / ratio, 0.0, ((self.view.width as f32) - 1.0), -0.90, 0.90);
-		let scaled_y = rerange(y as f32, 0.0, ((self.view.height as f32) - 1.0), -0.90 + 0.0625, 0.90);
-		//println!("(x,y): {},{}", scaled_x, scaled_y);
-
-		[
-			[1.0 / ratio, 0.0, 0.0, 0.0],
-			[0.0, 1.0, 0.0, 0.0],
-			[0.0, 0.0, 1.0, 0.0],
-			[scaled_x, scaled_y, 0.0, 1.0f32],
-		]
-	}
-
 	pub fn get(&self, x: u32, y: u32) -> Option<&Tile> {
 		let tile = self.map.get(translate(x, y, self.width));
 		return tile;
@@ -90,11 +77,19 @@ impl<'a> Map<'a> {
 		self.width * self.height
 	}
 
-	pub fn draw(&mut self, mut target: &mut glium::Frame, program: &glium::Program, ratio: f32) {
+	pub fn draw(&mut self, mut target: &mut glium::Frame, program: &glium::Program) {
 		for x in 0..self.view.width {
 			for y in 0..self.view.height {
-				let tile = self.map.get(translate(x, y, self.view.width)).unwrap();
-				let matrix = self.uniform(x, y, ratio);
+				let tile = self.map.get(translate(self.view.x + x, self.view.y + y, self.width)).unwrap();
+				let scaled_x = rerange(x as f32, 0.0, ((self.view.width as f32) - 1.0), -0.90, 0.90);
+				let scaled_y = rerange(y as f32, 0.0, ((self.view.height as f32) - 1.0), -0.90 + 0.0625, 0.90);
+
+				let matrix = [
+					[1.0, 0.0, 0.0, 0.0],
+					[0.0, 1.0, 0.0, 0.0],
+					[0.0, 0.0, 1.0, 0.0],
+					[scaled_x, scaled_y, 0.0, 1.0f32],
+				];
 
 				tile.draw(target, &program, matrix);
 			}

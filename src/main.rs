@@ -31,8 +31,8 @@ fn handle_input(key: Option<glium::glutin::VirtualKeyCode>, state: glium::glutin
 }
 
 fn main() {
-	let width = 800;
-	let height = 800;
+	let width = 640;
+	let height = 480;
 
 	let display = glium::glutin::WindowBuilder::new()
 		.with_dimensions(width, height)
@@ -42,7 +42,7 @@ fn main() {
 
 	let ratio = width as f32 / height as f32;
 	let atlas = TileAtlas::new(&display, 16, 16);
-	let mut map = Map::new(11, 11, 11, 11, &atlas);
+	let mut map = Map::new(101, 101, 20, 20, &atlas);
 
 	let vert_shader_src = r#"
 		#version 140
@@ -54,7 +54,7 @@ fn main() {
 		uniform mat4 matrix;
 		void main() {
 			v_tex_coords = tex_coords;
-			gl_Position = matrix * vec4(position * 0.18, 0.0, 1.0);
+			gl_Position = matrix * vec4(position * 0.1, 0.0, 1.0);
 		}
 	"#;
 
@@ -89,8 +89,8 @@ fn main() {
 			score += 1;
 		}
 
-		map.draw(&mut target, &program, ratio);
-		player.draw(&mut target, &program, &map, ratio);
+		map.draw(&mut target, &program);
+		player.draw(&mut target, &program, &map);
 
 		let score_text = glium_text::TextDisplay::new(&text_system, &font, format!("score: {}", score).as_str());
 		let title_text = glium_text::TextDisplay::new(&text_system, &font, "TilePaste");
@@ -99,7 +99,7 @@ fn main() {
 			[0.05 / ratio, 0.0, 0.0, 0.0],
 			[0.0, 0.05, 0.0, 0.0],
 			[0.0, 0.0, 1.0, 0.0],
-			[0.75, -0.99, 0.0, 1.0],
+			[0.65, -0.99, 0.0, 1.0],
 		];
 
 		let title_matrix = [

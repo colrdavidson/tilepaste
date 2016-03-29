@@ -7,7 +7,7 @@ use utils::rerange;
 pub struct Player<'a> {
 	pub x: i32,
 	pub y: i32,
-	pub tile: Tile<'a>, //location & texture id
+	pub tile: Tile<'a>,
 }
 
 impl<'a> Player<'a> {
@@ -49,11 +49,11 @@ impl<'a> Player<'a> {
 		self.move_to(1, 0);
 	}
 
-	pub fn draw(&self, mut target: &mut glium::Frame, program: &glium::Program, map: &Map, ratio: f32) {
-		let scaled_x = rerange((self.x as f32) / ratio, 0.0, ((map.view.width as f32) - 1.0), -0.90, 0.90);
+	pub fn draw(&self, mut target: &mut glium::Frame, program: &glium::Program, map: &Map) {
+		let scaled_x = rerange(self.x as f32, 0.0, ((map.view.width as f32) - 1.0), -0.90, 0.90);
 		let scaled_y = rerange(self.y as f32, 0.0, ((map.view.height as f32) - 1.0), -0.90 + 0.0625, 0.90);
 		let matrix = [
-				[1.0 / ratio, 0.0, 0.0, 0.0],
+				[1.0, 0.0, 0.0, 0.0],
 				[0.0, 1.0, 0.0, 0.0],
 				[0.0, 0.0, 1.0, 0.0],
 				[scaled_x, scaled_y, 0.0, 1.0f32],

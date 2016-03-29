@@ -73,7 +73,7 @@ fn main() {
 
 	let program = glium::Program::from_source(&display, vert_shader_src, frag_shader_src, None).unwrap();
 
-	let mut player = Player::new(13, &atlas, 0, 0);
+	let mut player = Player::new(1, 0, 4, 5, &atlas, 0, 0);
 
 	let text_system = glium_text::TextSystem::new(&display);
 	let font_file = std::fs::File::open(&std::path::Path::new("assets/font.ttf")).unwrap();

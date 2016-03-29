@@ -4,18 +4,33 @@ use tile::{Tile, TileAtlas};
 use map::Map;
 use utils::rerange;
 
+pub enum Direction {
+	Up,
+	Down,
+	Left,
+	Right,
+}
+
 pub struct Player<'a> {
 	pub x: i32,
 	pub y: i32,
-	pub tile: Tile<'a>,
+	pub dir: Direction,
+	pub up: Tile<'a>,
+	pub down: Tile<'a>,
+	pub left: Tile<'a>,
+	pub right: Tile<'a>,
 }
 
 impl<'a> Player<'a> {
-	pub fn new(id: u32, atlas: &'a TileAtlas, x: i32, y: i32) -> Player<'a> {
+	pub fn new(up: u32, down: u32, left: u32, right: u32, atlas: &'a TileAtlas, x: i32, y: i32) -> Player<'a> {
 		Player {
 			x: x,
 			y: y,
-			tile: Tile::new(id, atlas),
+			dir: Direction::Down,
+			up: Tile::new(up, atlas),
+			down: Tile::new(down, atlas),
+			left: Tile::new(left, atlas),
+			right: Tile::new(right, atlas),
 		}
 	}
 
@@ -34,18 +49,22 @@ impl<'a> Player<'a> {
 	}
 
 	pub fn down(&mut self) {
+		self.dir = Direction::Down;
 		self.move_to(0, -1);
 	}
 
 	pub fn up(&mut self) {
+		self.dir = Direction::Up;
 		self.move_to(0, 1);
 	}
 
 	pub fn left(&mut self) {
+		self.dir = Direction::Left;
 		self.move_to(-1, 0);
 	}
 
 	pub fn right(&mut self) {
+		self.dir = Direction::Right;
 		self.move_to(1, 0);
 	}
 
@@ -58,6 +77,13 @@ impl<'a> Player<'a> {
 				[0.0, 0.0, 1.0, 0.0],
 				[scaled_x, scaled_y, 0.0, 1.0f32],
 		];
-		self.tile.draw(&mut target, program, matrix);
+		let tile;
+		match self.dir {
+			Direction::Up => { tile = &self.up; },
+			Direction::Down => { tile = &self.down; },
+			Direction::Left => { tile = &self.left; },
+			Direction::Right => { tile = &self.right; },
+		}
+		tile.draw(&mut target, program, matrix);
 	}
 }

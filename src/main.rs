@@ -8,21 +8,22 @@ pub mod map;
 pub mod tile;
 pub mod player;
 pub mod vert;
+pub mod game;
 
 use glium::{DisplayBuild, Surface};
 
-use map::Map;
-use player::Player;
+use game::Game;
 use tile::TileAtlas;
 
-fn handle_input(key: Option<glium::glutin::VirtualKeyCode>, state: glium::glutin::ElementState, player: &mut Player) -> bool {
+fn handle_input(key: Option<glium::glutin::VirtualKeyCode>, state: glium::glutin::ElementState, game: &mut Game) -> bool {
 	if key.is_some() && state == glium::glutin::ElementState::Pressed {
 		let key = key.unwrap();
 		match key {
-			glium::glutin::VirtualKeyCode::W => { player.up(); return false; },
-			glium::glutin::VirtualKeyCode::S => { player.down(); return false; },
-			glium::glutin::VirtualKeyCode::A => { player.left(); return false; },
-			glium::glutin::VirtualKeyCode::D => { player.right(); return false; },
+			glium::glutin::VirtualKeyCode::W => { game.map.player.up(); return false; },
+			glium::glutin::VirtualKeyCode::S => { game.map.player.down(); return false; },
+			glium::glutin::VirtualKeyCode::A => { game.map.player.left(); return false; },
+			glium::glutin::VirtualKeyCode::D => { game.map.player.right(); return false; },
+			glium::glutin::VirtualKeyCode::Space => { println!("SPACE"); return false; },
 			glium::glutin::VirtualKeyCode::Q => { return true; }
 			_ => { return false; },
 		}
@@ -42,7 +43,6 @@ fn main() {
 
 	let ratio = width as f32 / height as f32;
 	let atlas = TileAtlas::new(&display, 16, 16);
-	let mut map = Map::new(101, 101, 20, 20, &atlas);
 
 	let vert_shader_src = r#"
 		#version 140
@@ -72,52 +72,24 @@ fn main() {
 	"#;
 
 	let program = glium::Program::from_source(&display, vert_shader_src, frag_shader_src, None).unwrap();
-
-	let mut player = Player::new(1, 0, 4, 5, &atlas, 0, 0);
-
 	let text_system = glium_text::TextSystem::new(&display);
-	let font_file = std::fs::File::open(&std::path::Path::new("assets/font.ttf")).unwrap();
+	let font_file = std::fs::File::open(&std::path::Path::new("assets/ubuntu.ttf")).unwrap();
 	let font = glium_text::FontTexture::new(&display, font_file, 24).unwrap();
-	let mut score = 0;
+
+	let mut game = Game::new(&atlas);
 
 	loop {
 		let mut target = display.draw();
 		target.clear_color(0.0, 0.0, 1.0, 1.0);
 
-		if map.get(player.x as u32, player.y as u32).unwrap().tex_id == 14 {
-			map.set(player.x as u32, player.y as u32, 12);
-			score += 1;
-		}
-
-		map.draw(&mut target, &program);
-		player.draw(&mut target, &program, &map);
-
-		let score_text = glium_text::TextDisplay::new(&text_system, &font, format!("score: {}", score).as_str());
-		let title_text = glium_text::TextDisplay::new(&text_system, &font, "TilePaste");
-
-		let score_matrix = [
-			[0.05 / ratio, 0.0, 0.0, 0.0],
-			[0.0, 0.05, 0.0, 0.0],
-			[0.0, 0.0, 1.0, 0.0],
-			[0.65, -0.99, 0.0, 1.0],
-		];
-
-		let title_matrix = [
-			[0.05 / ratio, 0.0, 0.0, 0.0],
-			[0.0, 0.05, 0.0, 0.0],
-			[0.0, 0.0, 1.0, 0.0],
-			[-1.0, -0.99, 0.0, 1.0],
-		];
-
-		glium_text::draw(&score_text, &text_system, &mut target, score_matrix, (1.0, 1.0, 0.0, 1.0));
-		glium_text::draw(&title_text, &text_system, &mut target, title_matrix, (1.0, 1.0, 0.0, 1.0));
+		game.draw(&mut target, &program, &text_system, &font, ratio);
 
 		target.finish().unwrap();
 
 		for event in display.poll_events() {
 			match event {
 				glium::glutin::Event::Closed => return,
-				glium::glutin::Event::KeyboardInput(state, _, key) => if handle_input(key, state, &mut player) { return; },
+				glium::glutin::Event::KeyboardInput(state, _, key) => if handle_input(key, state, &mut game) { return; },
 				_ => (),
 			}
 		}

@@ -1,7 +1,7 @@
 use glium;
 
 use tile::{Tile, TileAtlas};
-use map::Map;
+use map::View;
 use utils::rerange;
 
 pub enum Direction {
@@ -22,15 +22,15 @@ pub struct Player<'a> {
 }
 
 impl<'a> Player<'a> {
-	pub fn new(up: u32, down: u32, left: u32, right: u32, atlas: &'a TileAtlas, x: i32, y: i32) -> Player<'a> {
+	pub fn new(dirs: Vec<u32>, atlas: &'a TileAtlas, x: i32, y: i32) -> Player<'a> {
 		Player {
 			x: x,
 			y: y,
 			dir: Direction::Down,
-			up: Tile::new(up, atlas),
-			down: Tile::new(down, atlas),
-			left: Tile::new(left, atlas),
-			right: Tile::new(right, atlas),
+			up: Tile::new(dirs[0], atlas),
+			down: Tile::new(dirs[1], atlas),
+			left: Tile::new(dirs[2], atlas),
+			right: Tile::new(dirs[3], atlas),
 		}
 	}
 
@@ -68,15 +68,28 @@ impl<'a> Player<'a> {
 		self.move_to(1, 0);
 	}
 
-	pub fn draw(&self, mut target: &mut glium::Frame, program: &glium::Program, map: &Map) {
-		let scaled_x = rerange(self.x as f32, 0.0, ((map.view.width as f32) - 1.0), -0.90, 0.90);
-		let scaled_y = rerange(self.y as f32, 0.0, ((map.view.height as f32) - 1.0), -0.90 + 0.0625, 0.90);
+	pub fn draw(&mut self, mut target: &mut glium::Frame, program: &glium::Program, view: &View) {
+		let x;
+		if self.x > (view.width - 1) {
+			x = view.width - 1;
+		} else {
+			x = self.x;
+		}
+		let y;
+		if self.y > (view.height - 1) {
+			y = view.height - 1;
+		} else {
+			y = self.y;
+		}
+		let scaled_x = rerange(x as f32, 0.0, ((view.width as f32) - 1.0), -0.90, 0.90);
+		let scaled_y = rerange(y as f32, 0.0, ((view.height as f32) - 1.0), -0.90 + 0.0625, 0.90);
 		let matrix = [
 				[1.0, 0.0, 0.0, 0.0],
 				[0.0, 1.0, 0.0, 0.0],
 				[0.0, 0.0, 1.0, 0.0],
 				[scaled_x, scaled_y, 0.0, 1.0f32],
 		];
+
 		let tile;
 		match self.dir {
 			Direction::Up => { tile = &self.up; },

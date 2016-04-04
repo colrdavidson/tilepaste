@@ -11,8 +11,8 @@ pub struct Game<'a> {
 }
 
 impl<'a> Game<'a> {
-    pub fn new(atlas: &'a TileAtlas) -> Game {
-        let map = Map::new(101, 101, 20.0, 15.0, &atlas);
+    pub fn new(ratio: f32, atlas: &'a TileAtlas) -> Game {
+        let map = Map::new(101, 101, 20.0, ratio, &atlas);
     	let score = 9999;
 
         Game {
@@ -21,14 +21,14 @@ impl<'a> Game<'a> {
         }
     }
 
-    pub fn handle_input(&mut self, key: Option<glium::glutin::VirtualKeyCode>, state: glium::glutin::ElementState) -> bool {
+    pub fn handle_input(&mut self, key: Option<glium::glutin::VirtualKeyCode>, state: glium::glutin::ElementState, dt: f32) -> bool {
     	if key.is_some() && state == glium::glutin::ElementState::Pressed {
     		let key = key.unwrap();
     		match key {
-    			glium::glutin::VirtualKeyCode::W => { self.map.player.up(); return false; },
-    			glium::glutin::VirtualKeyCode::S => { self.map.player.down(); return false; },
-    			glium::glutin::VirtualKeyCode::A => { self.map.player.left(); return false; },
-    			glium::glutin::VirtualKeyCode::D => { self.map.player.right(); return false; },
+    			glium::glutin::VirtualKeyCode::W => { self.map.player.up(dt); return false; },
+    			glium::glutin::VirtualKeyCode::S => { self.map.player.down(dt); return false; },
+    			glium::glutin::VirtualKeyCode::A => { self.map.player.left(dt); return false; },
+    			glium::glutin::VirtualKeyCode::D => { self.map.player.right(dt); return false; },
     			glium::glutin::VirtualKeyCode::Space => { println!("SPACE"); return false; },
     			glium::glutin::VirtualKeyCode::Q => { return true; }
     			_ => { return false; },

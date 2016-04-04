@@ -2,10 +2,12 @@
 extern crate glium;
 extern crate image;
 extern crate glium_text;
+extern crate time;
 
 pub mod utils;
 pub mod map;
 pub mod tile;
+pub mod entity;
 pub mod player;
 pub mod vert;
 pub mod game;
@@ -60,9 +62,19 @@ fn main() {
 	let font_file = std::fs::File::open(&std::path::Path::new("assets/ubuntu.ttf")).unwrap();
 	let font = glium_text::FontTexture::new(&display, font_file, 24).unwrap();
 
-	let mut game = Game::new(&atlas);
+	let mut game = Game::new(ratio, &atlas);
+	let mut dt = 0.0;
 
 	loop {
+		let start_time = time::precise_time_ns();
+		for event in display.poll_events() {
+			match event {
+				glium::glutin::Event::Closed => return,
+				glium::glutin::Event::KeyboardInput(state, _, key) => if game.handle_input(key, state, dt) { return; },
+				_ => (),
+			}
+		}
+
 		let mut target = display.draw();
 		target.clear_color(0.0, 0.0, 1.0, 1.0);
 
@@ -70,12 +82,7 @@ fn main() {
 
 		target.finish().unwrap();
 
-		for event in display.poll_events() {
-			match event {
-				glium::glutin::Event::Closed => return,
-				glium::glutin::Event::KeyboardInput(state, _, key) => if game.handle_input(key, state) { return; },
-				_ => (),
-			}
-		}
+		let end_time = time::precise_time_ns();
+		dt = ((end_time - start_time) as f32 / 1e6) / 60.0;
 	}
 }

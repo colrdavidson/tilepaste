@@ -12,8 +12,8 @@ pub enum Direction {
 }
 
 pub struct Player<'a> {
-	pub x: i32,
-	pub y: i32,
+	pub x: f32,
+	pub y: f32,
 	pub dir: Direction,
 	pub up: Tile<'a>,
 	pub down: Tile<'a>,
@@ -22,7 +22,7 @@ pub struct Player<'a> {
 }
 
 impl<'a> Player<'a> {
-	pub fn new(dirs: Vec<u32>, atlas: &'a TileAtlas, x: i32, y: i32) -> Player<'a> {
+	pub fn new(dirs: Vec<u32>, atlas: &'a TileAtlas, x: f32, y: f32) -> Player<'a> {
 		Player {
 			x: x,
 			y: y,
@@ -34,62 +34,67 @@ impl<'a> Player<'a> {
 		}
 	}
 
-	pub fn move_to(&mut self, x: i32, y: i32) {
+	pub fn move_to(&mut self, x: f32, y: f32) {
 		self.x += x;
 		self.y += y;
 
-		if !(self.x > 0 && self.y > 0) {
-			if self.x < 0 {
-				self.x = 0;
+		if !(self.x > 0.0 && self.y > 0.0) {
+			if self.x < 0.0 {
+				self.x = 0.0;
 			}
-			if self.y < 0 {
-				self.y = 0;
+			if self.y < 0.0 {
+				self.y = 0.0;
 			}
 		}
 	}
 
 	pub fn down(&mut self) {
 		self.dir = Direction::Down;
-		self.move_to(0, -1);
+		self.move_to(0.0, -1.0);
 	}
 
 	pub fn up(&mut self) {
 		self.dir = Direction::Up;
-		self.move_to(0, 1);
+		self.move_to(0.0, 1.0);
 	}
 
 	pub fn left(&mut self) {
 		self.dir = Direction::Left;
-		self.move_to(-1, 0);
+		self.move_to(-1.0, 0.0);
 	}
 
 	pub fn right(&mut self) {
 		self.dir = Direction::Right;
-		self.move_to(1, 0);
+		self.move_to(1.0, 0.0);
 	}
 
 	pub fn draw(&mut self, mut target: &mut glium::Frame, program: &glium::Program, view: &View) {
 		let x;
-		if self.x > (view.width - 1) {
-			x = view.width - 1;
+		if self.x > (view.width - 1.0) {
+			x = view.width - 1.0;
 		} else {
 			x = self.x;
 		}
 		let y;
-		if self.y > (view.height - 1) {
-			y = view.height - 1;
+		if self.y > (view.height - 1.0) {
+			y = view.height - 1.0;
 		} else {
 			y = self.y;
 		}
-		let scaled_x = rerange(x as f32, 0.0, ((view.width as f32) - 1.0), -0.90, 0.90);
-		let scaled_y = rerange(y as f32, 0.0, ((view.height as f32) - 1.0), -0.90 + 0.0625, 0.90);
-		let matrix = [
-				[1.0, 0.0, 0.0, 0.0],
-				[0.0, 1.0, 0.0, 0.0],
-				[0.0, 0.0, 1.0, 0.0],
-				[scaled_x, scaled_y, 0.0, 1.0f32],
-		];
 
+		let ui_shim = 0.075;
+		let scaled_x = rerange(x, 0.0, view.width - 1.0, -1.0, 1.0);
+		let scaled_y = rerange(y, 0.0, view.height - 1.0, -1.0, 1.0 - ui_shim);
+		
+		let tile_width = 1.0 / (view.width - 1.0);
+		let tile_height = 1.0 / (view.height - 1.0);
+
+		let matrix = [
+			[1.0 * tile_width, 0.0, 0.0, 0.0],
+			[0.0, 1.0 * tile_height, 0.0, 0.0],
+			[0.0, 0.0, 1.0, 0.0],
+			[scaled_x + tile_width, scaled_y + tile_height + ui_shim, 0.0, 1.0f32],
+		];
 		let tile;
 		match self.dir {
 			Direction::Up => { tile = &self.up; },

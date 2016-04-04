@@ -26,7 +26,7 @@ impl<'a> Tile<'a> {
 		}
 	}
 
-    pub fn draw(&self, mut target: &mut glium::Frame, program: &glium::Program, matrix: [[f32; 4]; 4]) {
+	pub fn draw(&self, mut target: &mut glium::Frame, program: &glium::Program, matrix: [[f32; 4]; 4]) {
         let buffer = self.atlas.tex_verts.get(self.tex_id as usize).unwrap();
         let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
@@ -99,11 +99,11 @@ fn atlas_verts(entry: usize, sheet_entries: usize) -> Vec<Vert> {
     let top_left = 	   [base_x, base_y + scalar];
     let top_right =	   [base_x + scalar, base_y + scalar];
 
-    let vert1 = Vert { position: [-0.5, -0.5], tex_coords: bottom_left };
-    let vert2 = Vert { position: [-0.5,  0.5], tex_coords: top_left };
-    let vert3 = Vert { position: [ 0.5, -0.5], tex_coords: bottom_right };
-    let vert4 = Vert { position: [ 0.5, -0.5], tex_coords: bottom_right };
-    let vert5 = Vert { position: [-0.5,  0.5], tex_coords: top_left };
-    let vert6 = Vert { position: [ 0.5,  0.5], tex_coords: top_right };
+    let vert1 = Vert { position: [-1.0, -1.0], tex_coords: bottom_left };
+    let vert2 = Vert { position: [-1.0,  1.0], tex_coords: top_left };
+    let vert3 = Vert { position: [ 1.0, -1.0], tex_coords: bottom_right };
+    let vert4 = Vert { position: [ 1.0, -1.0], tex_coords: bottom_right };
+    let vert5 = Vert { position: [-1.0,  1.0], tex_coords: top_left };
+    let vert6 = Vert { position: [ 1.0,  1.0], tex_coords: top_right };
     vec![vert1, vert2, vert3, vert4, vert5, vert6]
 }

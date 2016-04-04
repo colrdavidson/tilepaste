@@ -15,22 +15,6 @@ use glium::{DisplayBuild, Surface};
 use game::Game;
 use tile::TileAtlas;
 
-fn handle_input(key: Option<glium::glutin::VirtualKeyCode>, state: glium::glutin::ElementState, game: &mut Game) -> bool {
-	if key.is_some() && state == glium::glutin::ElementState::Pressed {
-		let key = key.unwrap();
-		match key {
-			glium::glutin::VirtualKeyCode::W => { game.map.player.up(); return false; },
-			glium::glutin::VirtualKeyCode::S => { game.map.player.down(); return false; },
-			glium::glutin::VirtualKeyCode::A => { game.map.player.left(); return false; },
-			glium::glutin::VirtualKeyCode::D => { game.map.player.right(); return false; },
-			glium::glutin::VirtualKeyCode::Space => { println!("SPACE"); return false; },
-			glium::glutin::VirtualKeyCode::Q => { return true; }
-			_ => { return false; },
-		}
-	}
-	false
-}
-
 fn main() {
 	let width = 640;
 	let height = 480;
@@ -54,7 +38,7 @@ fn main() {
 		uniform mat4 matrix;
 		void main() {
 			v_tex_coords = tex_coords;
-			gl_Position = matrix * vec4(position * 0.1, 0.0, 1.0);
+			gl_Position = matrix * vec4(position, 0.0, 1.0);
 		}
 	"#;
 
@@ -89,7 +73,7 @@ fn main() {
 		for event in display.poll_events() {
 			match event {
 				glium::glutin::Event::Closed => return,
-				glium::glutin::Event::KeyboardInput(state, _, key) => if handle_input(key, state, &mut game) { return; },
+				glium::glutin::Event::KeyboardInput(state, _, key) => if game.handle_input(key, state) { return; },
 				_ => (),
 			}
 		}

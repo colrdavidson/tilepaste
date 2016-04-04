@@ -5,14 +5,14 @@ use tile::{Tile, TileAtlas};
 use utils::{rerange, translate};
 
 pub struct View {
-	pub x: i32,
-	pub y: i32,
-	pub width: i32,
-	pub height: i32,
+	pub x: f32,
+	pub y: f32,
+	pub width: f32,
+	pub height: f32,
 }
 
 impl View {
-	pub fn new(start_x: i32, start_y: i32, width: i32, height: i32) -> View {
+	pub fn new(start_x: f32, start_y: f32, width: f32, height: f32) -> View {
 		View {
 			x: start_x,
 			y: start_y,
@@ -31,7 +31,7 @@ pub struct Map<'a> {
 }
 
 impl<'a> Map<'a> {
-	pub fn new(width: i32, height: i32, view_width: i32, view_height: i32, atlas: &'a TileAtlas) -> Map<'a> {
+	pub fn new(width: i32, height: i32, view_width: f32, view_height: f32, atlas: &'a TileAtlas) -> Map<'a> {
 		let mut map = Vec::with_capacity((width * height) as usize);
 
 		for index in 0..map.capacity() {
@@ -48,10 +48,10 @@ impl<'a> Map<'a> {
 			map.push(Tile::new(id, atlas));
 		}
 
-		let view = View::new(0, 0, view_width, view_height);
+		let view = View::new(0.0, 0.0, view_width, view_height);
 
 		let dirs = vec![1, 0, 4, 5];
-		let player = Player::new(dirs, &atlas, 0, 0);
+		let player = Player::new(dirs, &atlas, 0.0, 0.0);
 
 		Map {
 			player: player,
@@ -75,59 +75,26 @@ impl<'a> Map<'a> {
 		self.width * self.height
 	}
 
-	pub fn track_player(&mut self) {
-		if self.player.x > self.width {
-			self.player.x = self.width;
-		}
-		if self.player.y > self.height {
-			self.player.y = self.height;
-		}
-
-		if self.player.x >= (self.view.width + self.view.x) {
-			self.view.x += 1;
-		}
-		if self.player.x < self.view.x {
-			self.view.x -= 1;
-		}
-
-		if self.player.y >= (self.view.height + self.view.y) {
-			self.view.y += 1;
-		}
-		if self.player.y < self.view.y {
-			self.view.y -= 1;
-		}
-
-
-		if self.view.x < 0 {
-			self.view.x = 0;
-		}
-		if self.view.y < 0 {
-			self.view.y = 0;
-		}
-		if self.view.x > (self.width - self.view.width) {
-			self.view.x = self.width - self.view.width;
-		}
-		if self.view.y > (self.height - self.view.height) {
-			self.view.y = self.height - self.view.height;
-		}
-
-		//println!("[TRACK][player: {},{}][view: {},{}]", self.player.x, self.player.y, self.view.x, self.view.y);
-	}
-
 	pub fn draw(&mut self, mut target: &mut glium::Frame, program: &glium::Program) {
-		self.track_player();
-		for x in 0..self.view.width {
-			for y in 0..self.view.height {
-				let scaled_x = rerange(x as f32, 0.0, ((self.view.width as f32) - 1.0), -0.90, 0.90);
-				let scaled_y = rerange(y as f32, 0.0, ((self.view.height as f32) - 1.0), -0.90 + 0.0625, 0.90);
+		for x in 0..(self.view.width as u32) {
+			for y in 0..(self.view.height as u32) {
+				let x = x as f32;
+				let y = y as f32;
+
+				let ui_shim = 0.075;
+				let scaled_x = rerange(x, 0.0, self.view.width - 1.0, -1.0, 1.0);
+				let scaled_y = rerange(y, 0.0, self.view.height - 1.0, -1.0, 1.0 - ui_shim);
+
+				let tile_width = 1.0 / (self.view.width - 1.0);
+				let tile_height = 1.0 / (self.view.height - 1.0);
 
 				let matrix = [
-					[1.0, 0.0, 0.0, 0.0],
-					[0.0, 1.0, 0.0, 0.0],
+					[1.0 * tile_width, 0.0, 0.0, 0.0],
+					[0.0, 1.0 * tile_height, 0.0, 0.0],
 					[0.0, 0.0, 1.0, 0.0],
-					[scaled_x, scaled_y, 0.0, 1.0f32],
+					[scaled_x + tile_width, scaled_y + tile_height + ui_shim, 0.0, 1.0f32],
 				];
-				let tile = self.map.get(translate(self.view.x + x, self.view.y + y, self.width)).unwrap();
+				let tile = self.map.get(translate((self.view.x + x) as i32, (self.view.y + y) as i32, self.width)).unwrap();
 				tile.draw(target, &program, matrix);
 			}
 		}

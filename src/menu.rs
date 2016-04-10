@@ -58,7 +58,7 @@ impl<'a> Scene<'a> for Menu {
             let y = -rerange(coords.1 as f32, 0.0, 960.0, -1.0, 1.0);
 
             for button in self.buttons.iter() {
-                if button.is_hovered(x, y) &&  {
+                if button.is_hovered(x, y) {
                     if clicked.is_some() && clicked.unwrap() == glium::glutin::MouseButton::Left {
                         button.trigger();
                     }

@@ -23,3 +23,17 @@ impl<T> Rectangle<T> {
 		}
 	}
 }
+
+pub struct V2<T> {
+	pub x: T,
+	pub y: T,
+}
+
+impl<T> V2<T> {
+	pub fn new(x: T, y: T) -> V2<T> {
+		V2 {
+			x: x,
+			y: y,
+		}
+	}
+}

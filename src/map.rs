@@ -26,7 +26,6 @@ impl View {
 pub struct Map<'a> {
 	pub tile_map: Vec<Tile<'a>>,
 	pub entity_map: Vec<Entity<'a>>,
-	pub player: Player<'a>,
 	pub view: View,
 	pub height: i32,
 	pub width: i32,
@@ -60,13 +59,9 @@ impl<'a> Map<'a> {
 
 		let view = View::new(0.0, 0.0, view_width, (view_width / ratio).floor());
 
-		let dirs = vec![1, 0, 4, 5];
-		let player = Player::new(dirs, &atlas, 0.0, 0.0);
-
 		Map {
 			tile_map: tile_map,
 			entity_map: entity_map,
-			player: player,
 			view: view,
 			height: height,
 			width: width,
@@ -131,7 +126,5 @@ impl<'a> Map<'a> {
 				entity.draw(target, &program, matrix);
 			}
 		}
-
-		self.player.draw(target, &program, &self.view);
 	}
 }

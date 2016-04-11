@@ -3,6 +3,7 @@ use glium;
 use tile::{Tile, TileAtlas};
 use map::View;
 use utils::rerange;
+use utils::V2;
 
 pub enum Direction {
 	Up,
@@ -12,8 +13,9 @@ pub enum Direction {
 }
 
 pub struct Player<'a> {
-	pub x: f32,
-	pub y: f32,
+	pub pos: V2<f32>,
+	pub vel: V2<f32>,
+	pub speed: f32,
 	pub dir: Direction,
 	pub up: Tile<'a>,
 	pub down: Tile<'a>,
@@ -22,10 +24,11 @@ pub struct Player<'a> {
 }
 
 impl<'a> Player<'a> {
-	pub fn new(dirs: Vec<u32>, atlas: &'a TileAtlas, x: f32, y: f32) -> Player<'a> {
+	pub fn new(dirs: Vec<u32>, atlas: &'a TileAtlas, pos: V2<f32>) -> Player<'a> {
 		Player {
-			x: x,
-			y: y,
+			pos: V2::new(0.0, 0.0),
+			vel: V2::new(0.0, 0.0),
+			speed: 2.0,
 			dir: Direction::Down,
 			up: Tile::new(dirs[0], atlas),
 			down: Tile::new(dirs[1], atlas),
@@ -35,15 +38,21 @@ impl<'a> Player<'a> {
 	}
 
 	pub fn move_to(&mut self, x: f32, y: f32, dt: f32) {
-		self.x += x * dt;
-		self.y += y * dt;
+		let x = -0.6 * self.vel.x + x;
+		let y = -0.6 * self.vel.y + y;
+		self.pos.x = (0.5 * x * dt * dt) + self.vel.x * dt + self.pos.x;
+		self.pos.y = (0.5 * y * dt * dt) + self.vel.y * dt + self.pos.y;
+		self.vel.x = (x * dt) + self.vel.x;
+		self.vel.y = (y * dt) + self.vel.y;
 
-		if !(self.x > 0.0 && self.y > 0.0) {
-			if self.x < 0.0 {
-				self.x = 0.0;
+		if !(self.pos.x > 0.0 && self.pos.y > 0.0) {
+			if self.pos.x < 0.0 {
+				self.pos.x = 0.0;
+				self.vel.x = 0.0;
 			}
-			if self.y < 0.0 {
-				self.y = 0.0;
+			if self.pos.y < 0.0 {
+				self.pos.y = 0.0;
+				self.vel.y = 0.0;
 			}
 		}
 	}
@@ -71,8 +80,8 @@ impl<'a> Player<'a> {
 	pub fn draw(&mut self, mut target: &mut glium::Frame, program: &glium::Program, view: &View) {
 
 		let ui_shim = 0.075;
-		let scaled_x = rerange(self.x, 0.0, view.width - 1.0, -1.0, 1.0);
-		let scaled_y = rerange(self.y, 0.0, view.height - 1.0, -1.0, 1.0 - ui_shim);
+		let scaled_x = rerange(self.pos.x, 0.0, view.width - 1.0, -1.0, 1.0);
+		let scaled_y = rerange(self.pos.y, 0.0, view.height - 1.0, -1.0, 1.0 - ui_shim);
 
 		let tile_width = 1.0 / (view.width - 1.0);
 		let tile_height = 1.0 / (view.height - 1.0);

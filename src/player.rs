@@ -15,7 +15,6 @@ pub enum Direction {
 pub struct Player<'a> {
 	pub pos: V2<f32>,
 	pub vel: V2<f32>,
-	pub speed: f32,
 	pub dir: Direction,
 	pub up: Tile<'a>,
 	pub down: Tile<'a>,
@@ -26,9 +25,8 @@ pub struct Player<'a> {
 impl<'a> Player<'a> {
 	pub fn new(dirs: Vec<u32>, atlas: &'a TileAtlas, pos: V2<f32>) -> Player<'a> {
 		Player {
-			pos: V2::new(0.0, 0.0),
+			pos: pos,
 			vel: V2::new(0.0, 0.0),
-			speed: 2.0,
 			dir: Direction::Down,
 			up: Tile::new(dirs[0], atlas),
 			down: Tile::new(dirs[1], atlas),
@@ -38,8 +36,12 @@ impl<'a> Player<'a> {
 	}
 
 	pub fn move_to(&mut self, x: f32, y: f32, dt: f32) {
-		let x = -0.6 * self.vel.x + x;
-		let y = -0.6 * self.vel.y + y;
+        self.vel.x /= 1.5;
+        self.vel.y /= 1.5;
+
+		let x = -0.5 * self.vel.x + x;
+		let y = -0.5 * self.vel.y + y;
+
 		self.pos.x = (0.5 * x * dt * dt) + self.vel.x * dt + self.pos.x;
 		self.pos.y = (0.5 * y * dt * dt) + self.vel.y * dt + self.pos.y;
 		self.vel.x = (x * dt) + self.vel.x;

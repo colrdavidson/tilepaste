@@ -1,6 +1,5 @@
 use glium;
 
-use player::Player;
 use entity::Entity;
 use tile::{Tile, TileAtlas};
 use utils::{rerange, translate};

@@ -10,11 +10,13 @@ pub mod tile;
 pub mod entity;
 pub mod player;
 pub mod vert;
+pub mod keyboard;
 pub mod game;
 pub mod menu;
 
 use glium::{DisplayBuild, Surface};
 
+use keyboard::Inputs;
 use menu::Menu;
 use game::Game;
 use tile::TileAtlas;
@@ -27,7 +29,7 @@ pub enum SceneTrans {
 }
 
 pub trait Scene<'a> {
-    fn handle_input(&mut self, key: Option<glium::glutin::VirtualKeyCode>, state: Option<glium::glutin::ElementState>, mouse_coords: Option<(i32, i32)>, clicked: Option<glium::glutin::MouseButton>, dt: f32) -> SceneTrans;
+    fn handle_input(&mut self, inputs: &Inputs, mouse_coords: Option<(i32, i32)>, clicked: Option<glium::glutin::MouseButton>, dt: f32) -> SceneTrans;
 	fn draw(&mut self, mut target: &mut glium::Frame, program: &glium::Program, text_system: &'a glium_text::TextSystem, font: &'a glium_text::FontTexture);
 }
 
@@ -79,24 +81,27 @@ fn main() {
 	let mut game = Game::new(ratio, &atlas);
 
 	let mut dt = 0.0;
+    let mut accum_dt = 0.0;
+    let mut frames = 0;
 	let mut coords = None;
 	let mut game_state = SceneTrans::Menu;
+    let mut inputs = Inputs::new();
 
 	loop {
 		let start_time = time::precise_time_ns();
 
-		let mut key = None;
-		let mut key_state = None;
 		let mut mouse = None;
 		for event in display.poll_events() {
 			match event {
 				glium::glutin::Event::Closed => { game_state = SceneTrans::Quit; },
-				glium::glutin::Event::KeyboardInput(tmp_state, _, tmp_key) => {
-					key = tmp_key;
-					key_state = Some(tmp_state);
+				glium::glutin::Event::KeyboardInput(state, _, key) => {
+                    if key.is_some() {
+                        let key = key.unwrap();
+                        inputs.update(key, state);
+                    }
 				},
 				glium::glutin::Event::MouseMoved(c) => { coords = Some(c); },
-				glium::glutin::Event::MouseInput(e, b) => { mouse = Some(b); },
+				glium::glutin::Event::MouseInput(_, b) => { mouse = Some(b); },
 				glium::glutin::Event::Resized(tmp_height, tmp_width) => {
 					height = tmp_height;
 					width = tmp_width;
@@ -113,11 +118,11 @@ fn main() {
 			match game_state {
 				SceneTrans::Quit => (),
 				SceneTrans::Menu => {
-					game_state = menu.handle_input(key, key_state, coords, mouse, dt);
+					game_state = menu.handle_input(&inputs, coords, mouse, dt);
 					menu.draw(&mut target, &program, &text_system, &font);
 				},
 				SceneTrans::Game => {
-					game_state = game.handle_input(key, key_state, coords, mouse, dt);
+					game_state = game.handle_input(&inputs, coords, mouse, dt);
 					game.draw(&mut target, &program, &text_system, &font);
 				},
 			}
@@ -127,6 +132,13 @@ fn main() {
 
 		let end_time = time::precise_time_ns();
 		dt = ((end_time - start_time) as f32 / 1e6) / 60.0;
+        frames += 1;
+        accum_dt += dt;
+        if accum_dt > 15.0 {
+//            println!("{}", frames);
+            frames = 0;
+            accum_dt = 0.0;
+        }
 
 		if game_state == SceneTrans::Quit {
 			return;

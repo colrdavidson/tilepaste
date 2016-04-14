@@ -9,6 +9,7 @@ use Scene;
 use SceneTrans;
 use vert::Vert;
 use utils::rerange;
+use keyboard;
 
 pub struct Menu {
     pub tex: glium::texture::SrgbTexture2d,
@@ -50,7 +51,8 @@ impl Menu {
 }
 
 impl<'a> Scene<'a> for Menu {
-    fn handle_input(&mut self, key: Option<glium::glutin::VirtualKeyCode>, state: Option<glium::glutin::ElementState>, coords: Option<(i32, i32)>, clicked: Option<glium::glutin::MouseButton>, dt: f32) -> SceneTrans {
+    fn handle_input(&mut self, inputs: &keyboard::Inputs, coords: Option<(i32, i32)>, clicked: Option<glium::glutin::MouseButton>, dt: f32) -> SceneTrans {
+        let mut state = SceneTrans::Menu;
         if coords.is_some() {
             let coords = coords.unwrap();
 
@@ -60,21 +62,22 @@ impl<'a> Scene<'a> for Menu {
             for button in self.buttons.iter() {
                 if button.is_hovered(x, y) {
                     if clicked.is_some() && clicked.unwrap() == glium::glutin::MouseButton::Left {
-                        button.trigger();
+                        state = button.trigger();
                     }
                 }
             }
         }
 
-        if key.is_some() && state.is_some() && state.unwrap() == glium::glutin::ElementState::Pressed {
-    		let key = key.unwrap();
-    		match key {
-                glium::glutin::VirtualKeyCode::Return => { return SceneTrans::Game; },
-    			glium::glutin::VirtualKeyCode::Q => { return SceneTrans::Quit; }
-    			_ => { return SceneTrans::Menu; },
-    		}
-    	}
-    	return SceneTrans::Menu;
+        for key in inputs.keys.iter() {
+            if *key.1 == keyboard::KeyState::Pressed {
+                match *key.0 {
+                    keyboard::Action::Enter => { state =  SceneTrans::Game; },
+                    keyboard::Action::Quit => { state =  SceneTrans::Quit; }
+                    _ => { },
+                }
+            }
+        }
+        return state;
     }
 
     fn draw(&mut self, mut target: &mut glium::Frame, program: &glium::Program, text_system: &glium_text::TextSystem, font: &glium_text::FontTexture) {
@@ -141,8 +144,13 @@ impl Button {
         (x >= self.x && x <= self.x + self.width && y >= self.y && y <= self.y + self.height)
     }
 
-    fn trigger(&self) {
-        println!("{}: triggered!, ({},{})", self.text, self.x, self.y);
+    fn trigger(&self) -> SceneTrans {
+        if self.text.as_str() == "Quit" {
+            return SceneTrans::Quit;
+        } else if self.text.as_str() == "Start" {
+            return SceneTrans::Game;
+        }
+        return SceneTrans::Menu;
     }
 
     fn draw(&self, mut target: &mut glium::Frame, program: &glium::Program, text_system: &glium_text::TextSystem, font: &glium_text::FontTexture) {

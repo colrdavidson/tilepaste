@@ -8,6 +8,7 @@ use player::Player;
 use map::Map;
 use tile::TileAtlas;
 use utils::V2;
+use keyboard;
 
 pub struct Game<'a> {
     pub player: Player<'a>,
@@ -34,22 +35,26 @@ impl<'a> Game<'a> {
 }
 
 impl<'a> Scene<'a> for Game<'a> {
-    fn handle_input(&mut self, key: Option<glium::glutin::VirtualKeyCode>, state: Option<glium::glutin::ElementState>, coords: Option<(i32, i32)>, clicked: Option<glium::glutin::MouseButton>, dt: f32) -> SceneTrans {
-    	if key.is_some() && state.is_some() && ((state.unwrap() == glium::glutin::ElementState::Pressed) || (state.unwrap() == glium::glutin::ElementState::Released)) {
-    		let key = key.unwrap();
-    		match key {
-    			glium::glutin::VirtualKeyCode::W => { self.player.up(dt); return SceneTrans::Game; },
-    			glium::glutin::VirtualKeyCode::S => { self.player.down(dt); return SceneTrans::Game; },
-    			glium::glutin::VirtualKeyCode::A => { self.player.left(dt); return SceneTrans::Game; },
-    			glium::glutin::VirtualKeyCode::D => { self.player.right(dt); return SceneTrans::Game; },
-                glium::glutin::VirtualKeyCode::Escape => { return SceneTrans::Menu; },
-    			glium::glutin::VirtualKeyCode::Q => { return SceneTrans::Quit; }
-    			_ => { self.player.move_to(0.0, 0.0, dt); return SceneTrans::Game; },
-    		}
-    	} else {
+    fn handle_input(&mut self, inputs: &keyboard::Inputs, coords: Option<(i32, i32)>, clicked: Option<glium::glutin::MouseButton>, dt: f32) -> SceneTrans {
+        let mut state = SceneTrans::Game;
+        if inputs.has_update() {
+            for key in inputs.keys.iter() {
+                if *key.1 == keyboard::KeyState::Pressed {
+                    match *key.0 {
+                        keyboard::Action::Up => { self.player.up(dt); },
+                        keyboard::Action::Down => { self.player.down(dt); },
+                        keyboard::Action::Left => { self.player.left(dt); },
+                        keyboard::Action::Right => { self.player.right(dt); },
+                        keyboard::Action::Back => { state =  SceneTrans::Menu; },
+                        keyboard::Action::Quit => { state =  SceneTrans::Quit; }
+                        _ => { self.player.move_to(0.0, 0.0, dt); },
+                    }
+                }
+            }
+        } else {
             self.player.move_to(0.0, 0.0, dt);
         }
-    	return SceneTrans::Game;
+        return state;
     }
 
     fn draw(&mut self, mut target: &mut glium::Frame, program: &glium::Program, text_system: &glium_text::TextSystem, font: &glium_text::FontTexture) {

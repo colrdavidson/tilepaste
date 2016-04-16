@@ -34,8 +34,8 @@ pub trait Scene<'a> {
 }
 
 fn main() {
-	let mut width = 640;
-	let mut height = 480;
+	let mut width = 1280;
+	let mut height = 720;
 
 	let display = glium::glutin::WindowBuilder::new()
 		.with_dimensions(width, height)

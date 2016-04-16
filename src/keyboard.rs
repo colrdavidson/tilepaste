@@ -2,12 +2,13 @@ use std::collections::HashMap;
 
 use glium;
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Debug)]
 pub enum Action {
     Up,
     Down,
     Left,
     Right,
+    Space,
     Enter,
     Quit,
     Back,
@@ -31,6 +32,7 @@ impl Inputs {
         keys.insert(Action::Left, KeyState::Released);
         keys.insert(Action::Right, KeyState::Released);
         keys.insert(Action::Enter, KeyState::Released);
+        keys.insert(Action::Space, KeyState::Released);
         keys.insert(Action::Back, KeyState::Released);
         keys.insert(Action::Quit, KeyState::Released);
 
@@ -45,6 +47,7 @@ impl Inputs {
             glium::glutin::VirtualKeyCode::S => Some((Action::Down, self.keys.get_mut(&Action::Down).unwrap())),
             glium::glutin::VirtualKeyCode::A => Some((Action::Left, self.keys.get_mut(&Action::Left).unwrap())),
             glium::glutin::VirtualKeyCode::D => Some((Action::Right, self.keys.get_mut(&Action::Right).unwrap())),
+            glium::glutin::VirtualKeyCode::Space => Some((Action::Space, self.keys.get_mut(&Action::Space).unwrap())),
             glium::glutin::VirtualKeyCode::Q => Some((Action::Quit, self.keys.get_mut(&Action::Quit).unwrap())),
             glium::glutin::VirtualKeyCode::Escape => Some((Action::Back, self.keys.get_mut(&Action::Back).unwrap())),
             glium::glutin::VirtualKeyCode::Return => Some((Action::Enter, self.keys.get_mut(&Action::Enter).unwrap())),

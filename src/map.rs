@@ -47,16 +47,9 @@ impl<'a> Map<'a> {
 			tile_map.push(Tile::new(id, atlas));
 		}
 
-		for i in 0..tile_map.len() {
-			let x = (i as i32) % width;
-			let y = (i as i32) / width;
+		entity_map.push(Entity::new(1.0, 1.0, 14, atlas));
 
-			if (x % 2) == 0 && (y % 2) == 0 && (x % 5) != 0  && (y % 5) != 0 {
-				entity_map.push(Entity::new(x as f32, y as f32, 14, atlas));
-			}
-		}
-
-		let view = View::new(0.0, 0.0, view_width, (view_width / ratio).floor());
+		let view = View::new(0.0, 0.0, view_width, ((30.0 / ratio).floor()));
 
 		Map {
 			tile_map: tile_map,

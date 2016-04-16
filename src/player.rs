@@ -6,6 +6,7 @@ use tile::{Tile, TileAtlas};
 use map::View;
 use utils::rerange;
 use utils::V2;
+use map;
 use keyboard;
 
 pub enum Direction {
@@ -38,16 +39,26 @@ impl<'a> Player<'a> {
 		}
 	}
 
-	pub fn move_to(&mut self, x: f32, y: f32, dt: f32) {
+	pub fn move_to(&mut self, map: &map::Map, x: f32, y: f32, dt: f32) {
         let friction = -1.0;
 
-		let x = friction * self.vel.x + x;
-		let y = friction * self.vel.y + y;
+		let x_acc = friction * self.vel.x + x;
+		let y_acc = friction * self.vel.y + y;
 
-		self.pos.x = (0.5 * x * dt * dt) + self.vel.x * dt + self.pos.x;
-		self.pos.y = (0.5 * y * dt * dt) + self.vel.y * dt + self.pos.y;
-		self.vel.x = (x * dt) + self.vel.x;
-		self.vel.y = (y * dt) + self.vel.y;
+		self.pos.x = (0.5 * x_acc * dt * dt) + self.vel.x * dt + self.pos.x;
+		self.pos.y = (0.5 * y_acc * dt * dt) + self.vel.y * dt + self.pos.y;
+		self.vel.x = (x_acc * dt) + self.vel.x;
+		self.vel.y = (y_acc * dt) + self.vel.y;
+
+        for entity in map.entity_map.iter() {
+            if (self.pos.x) == (entity.x) {
+                self.pos.x -= 1.0;
+            }
+
+            if (self.pos.y) == (entity.y) {
+                self.pos.y -= 1.0;
+            }
+        }
 
 		if !(self.pos.x > 0.0 && self.pos.y > 0.0) {
 			if self.pos.x < 0.0 {
@@ -59,15 +70,15 @@ impl<'a> Player<'a> {
 				self.vel.y = 0.0;
 			}
 		}
+
 	}
 
-    pub fn handle_input(&mut self, keys: Vec<&keyboard::Action>, t: f32) {
+    pub fn handle_input(&mut self, map: &map::Map, keys: Vec<&keyboard::Action>, t: f32) {
         let mut mx = 0.0;
-        let mut my = 0.0;
+        let mut my = -0.1;
         for key in keys {
             match *key {
-                keyboard::Action::Up => { my += 1.0; },
-                keyboard::Action::Down => { my += -1.0; },
+                keyboard::Action::Space => { my += 1.0; },
                 keyboard::Action::Left => { mx += -1.0; },
                 keyboard::Action::Right => { mx += 1.0; },
                 _ => { },
@@ -113,28 +124,8 @@ impl<'a> Player<'a> {
             self.dir = Direction::Up;
         }
 
-        self.move_to(mx, my, t);
+        self.move_to(map, mx, my, t);
     }
-
-	pub fn down(&mut self, t: f32) {
-		self.dir = Direction::Down;
-		self.move_to(0.0, -1.0, t);
-	}
-
-	pub fn up(&mut self, t: f32) {
-		self.dir = Direction::Up;
-		self.move_to(0.0, 1.0, t);
-	}
-
-	pub fn left(&mut self, t: f32) {
-		self.dir = Direction::Left;
-		self.move_to(-1.0, 0.0, t);
-	}
-
-	pub fn right(&mut self, t: f32) {
-		self.dir = Direction::Right;
-		self.move_to(1.0, 0.0, t);
-	}
 
 	pub fn draw(&mut self, mut target: &mut glium::Frame, program: &glium::Program, view: &View) {
 

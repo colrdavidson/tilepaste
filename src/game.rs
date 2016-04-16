@@ -46,17 +46,19 @@ impl<'a> Scene<'a> for Game<'a> {
                         keyboard::Action::Down => { player_inputs.push(key.0); },
                         keyboard::Action::Left => { player_inputs.push(key.0); },
                         keyboard::Action::Right => { player_inputs.push(key.0); },
+                        keyboard::Action::Space => { player_inputs.push(key.0); },
                         keyboard::Action::Back => { state =  SceneTrans::Menu; },
                         keyboard::Action::Quit => { state =  SceneTrans::Quit; }
                         _ => { },
                     }
                 }
             }
-        } else {
-            self.player.move_to(0.0, 0.0, dt);
+        }
+        else {
+            self.player.move_to(&self.map, 0.0, -1.0, dt);
         }
 
-        self.player.handle_input(player_inputs, dt);
+        self.player.handle_input(&self.map, player_inputs, dt);
         return state;
     }
 

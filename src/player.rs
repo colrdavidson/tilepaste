@@ -1,9 +1,12 @@
+use std::f32;
+
 use glium;
 
 use tile::{Tile, TileAtlas};
 use map::View;
 use utils::rerange;
 use utils::V2;
+use keyboard;
 
 pub enum Direction {
 	Up,
@@ -36,11 +39,10 @@ impl<'a> Player<'a> {
 	}
 
 	pub fn move_to(&mut self, x: f32, y: f32, dt: f32) {
-        self.vel.x /= 1.5;
-        self.vel.y /= 1.5;
+        let friction = -1.0;
 
-		let x = -0.5 * self.vel.x + x;
-		let y = -0.5 * self.vel.y + y;
+		let x = friction * self.vel.x + x;
+		let y = friction * self.vel.y + y;
 
 		self.pos.x = (0.5 * x * dt * dt) + self.vel.x * dt + self.pos.x;
 		self.pos.y = (0.5 * y * dt * dt) + self.vel.y * dt + self.pos.y;
@@ -58,6 +60,61 @@ impl<'a> Player<'a> {
 			}
 		}
 	}
+
+    pub fn handle_input(&mut self, keys: Vec<&keyboard::Action>, t: f32) {
+        let mut mx = 0.0;
+        let mut my = 0.0;
+        for key in keys {
+            match *key {
+                keyboard::Action::Up => { my += 1.0; },
+                keyboard::Action::Down => { my += -1.0; },
+                keyboard::Action::Left => { mx += -1.0; },
+                keyboard::Action::Right => { mx += 1.0; },
+                _ => { },
+            }
+        }
+
+        if mx > 1.0 { mx = 1.0; }
+        if mx < -1.0 { mx = -1.0; }
+        if my > 1.0 { my = 1.0; }
+        if my < -1.0 { my = -1.0; }
+
+        let diag = (f32::consts::PI / 4.0).sin();
+        if mx == 1.0 && my == 1.0 {
+            mx = diag;
+            my = diag;
+        }
+
+        if mx == 1.0 && my == -1.0 {
+            mx = diag;
+            my = -diag;
+        }
+
+        if mx == -1.0 && my == 1.0 {
+            mx = -diag;
+            my = diag;
+        }
+
+        if mx == -1.0 && my == -1.0 {
+            mx = -diag;
+            my = -diag;
+        }
+
+        if mx == 1.0 && my == 0.0 {
+            self.dir = Direction::Right;
+        }
+        if mx == -1.0 && my == 0.0 {
+            self.dir = Direction::Left;
+        }
+        if mx == 0.0 && my == -1.0 {
+            self.dir = Direction::Down;
+        }
+        if mx == 0.0 && my == 1.0 {
+            self.dir = Direction::Up;
+        }
+
+        self.move_to(mx, my, t);
+    }
 
 	pub fn down(&mut self, t: f32) {
 		self.dir = Direction::Down;

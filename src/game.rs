@@ -37,23 +37,26 @@ impl<'a> Game<'a> {
 impl<'a> Scene<'a> for Game<'a> {
     fn handle_input(&mut self, inputs: &keyboard::Inputs, coords: Option<(i32, i32)>, clicked: Option<glium::glutin::MouseButton>, dt: f32) -> SceneTrans {
         let mut state = SceneTrans::Game;
+        let mut player_inputs = Vec::new();
         if inputs.has_update() {
             for key in inputs.keys.iter() {
                 if *key.1 == keyboard::KeyState::Pressed {
                     match *key.0 {
-                        keyboard::Action::Up => { self.player.up(dt); },
-                        keyboard::Action::Down => { self.player.down(dt); },
-                        keyboard::Action::Left => { self.player.left(dt); },
-                        keyboard::Action::Right => { self.player.right(dt); },
+                        keyboard::Action::Up => { player_inputs.push(key.0); },
+                        keyboard::Action::Down => { player_inputs.push(key.0); },
+                        keyboard::Action::Left => { player_inputs.push(key.0); },
+                        keyboard::Action::Right => { player_inputs.push(key.0); },
                         keyboard::Action::Back => { state =  SceneTrans::Menu; },
                         keyboard::Action::Quit => { state =  SceneTrans::Quit; }
-                        _ => { self.player.move_to(0.0, 0.0, dt); },
+                        _ => { },
                     }
                 }
             }
         } else {
             self.player.move_to(0.0, 0.0, dt);
         }
+
+        self.player.handle_input(player_inputs, dt);
         return state;
     }
 
